@@ -7,63 +7,97 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 3/2019
-//Stand: 14/03/2019
+//Stand: 19/03/2019
 //////////////////////////////////////////////////////////////////////
 
+bool inputState[3] = {0, 0, 0}; //Die Anzeigen ob ein Eingang aktiv ist. Die sollen nicht hier bleiben, sondern kommen später dahin wos mehr sinn macht.
+
 #include "ui.hpp"
-#define pcf8575adress 0x20
 
+set settings; //Variable zum Speichern der Einstellungen erstellen
 
-//Bits zum Speichern der aktuellen Encoderdrehrichtung
-bool encplus = true;
-bool encminus = true;
-volatile bool buttonPressed;
-
-bool getButtonPressed(void){
-  return buttonPressed;
+set getSettings(void) {
+  return settings;
 }
 
+//Aktuell angezeigtes Bild
+//0: Grundbild
+//1: Menü
+byte currentScreen = 0;
+
+void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
+  switch (locCurrentScreen) {
+    case 0:
+      printHomeScreen(locInputState);
+      break;
+    case 1:
+      printMenuScreen();
+      break;
+  }
+}
+
+//Verwaltung des Encoders
+
+int encPosition = 0;
+
+void onEncoderChange(int newValue) {
+  Serial.print("Encoder change ");
+  Serial.println(newValue);
+  encPosition = newValue;
+  refreshScreen(currentScreen, inputState);
+}
+
+void onButtonClicked(uint8_t pin,  bool heldDown) {
+  Serial.print("S");
+  Serial.print(pin);
+  Serial.println(heldDown ? " Held" : " Pressed");
+  if (pin == 7 && heldDown == false) {
+    if (currentScreen == 0) currentScreen = 1;
+    else currentScreen = 0;
+  }
+  refreshScreen(currentScreen, inputState);
+}
+void loadSettings() {
+  //Einstellungen aus dem EEprom laden
+  EEPROM.get( eeAddress, settings); //Laden der Einstellungen aus dem EEprom
+
+  //DEBUG CODE
+  //Serielle ausgabe der Einstellungen
+  Serial.println("Einstellungen erfolgreich geladen!");
+  Serial.print("Source: ");
+
+  for (int i = 0; i < 4; i++)
+  {
+    Serial.print( settings.source[i] );
+    Serial.print(" ");
+  }
+
+  Serial.println("");
+  Serial.print("CoilType: ");
+
+  for (int i = 0; i < 4; i++)
+  {
+    Serial.print( settings.coilType[i] );
+    Serial.print(" ");
+  }
+
+}
 //Initialisierung der Eingabeknöpfe
 void initialiseButtons(void) {
-  buttonPressed = 0; // Bit was durch die Interrupt Methode auf 1 gesetzt wird, sobald eine Benutzereingabe erfolgt
-  Wire.begin(); //Eröffnen der I2C Schnittstelle
-  pinMode(2, INPUT_PULLUP); //Aktivieren des internen Pullups für den Interruptpin
-  attachInterrupt(digitalPinToInterrupt(2), pcf8575ISR, FALLING); //Initialisierung der Interruptroutine
+  Wire.begin();
+  switches.initialiseInterrupt(ioFrom8574(pcf8575adress, 2), false);
+
+  setupRotaryEncoderWithInterrupt(0, 1, onEncoderChange);
   Wire.requestFrom(pcf8575adress, 1); //Erste Abfrage der I2C Schnittstelle damit der PCF8575 die Interrupts korrekt setzt.
+
+  switches.changeEncoderPrecision(255, 0);
+  switches.addSwitch(2, onButtonClicked);
+  switches.addSwitch(3, onButtonClicked);
+  switches.addSwitch(4, onButtonClicked);
+  switches.addSwitch(5, onButtonClicked);
+  switches.addSwitch(6, onButtonClicked);
+  switches.addSwitch(7, onButtonClicked);
   Serial.println("PCF8575 erfolgreich initialisiert!");
-}
-
-//Interrupt Routine. Beim Erkennen einer Benutzereingabe soll lediglich ein Bit gesetzt werden, um die Routine nicht unnötig zu belasten.
-//Es ist an dieser Stelle nicht möglich bereits die I2C Schnittstelle auszulesen, da dazu ebenfalls eine Interruptroutine verwendet wird. Der ATMega würde sich sonst aufhängen.
-void pcf8575ISR(void) {
-  buttonPressed = 1;
-}
-
-//Auslesen der I2C Schnitstelle und bestimmen der erfolgten Benutzereingabe
-void readButtons(void) {
-  Wire.requestFrom(pcf8575adress, 1);
-  byte incomingByte = Wire.read();
-
-
-  if (incomingByte == 0b00000011) {
-    encplus = true;
-    encminus = true;
-  }
-  if ((incomingByte == 0b00000001) && encminus) {
-    Serial.println("Enc+");
-    encplus = false;
-  }
-  if ((incomingByte == 0b00000010) && encplus ) {
-    Serial.println("Enc-");
-    encminus = false;
-  }
-  if (incomingByte == 0b00000111) Serial.println("Enc Click");
-  if (incomingByte == 0b00001011) Serial.println("Button 1");
-  if (incomingByte == 0b00010011) Serial.println("Button 2");
-  if (incomingByte == 0b00100011) Serial.println("Button 3");
-  if (incomingByte == 0b01000011) Serial.println("Button 4");
-  if (incomingByte == 0b10000011) Serial.println("Home");
-  buttonPressed = 0;
 }
 
 //Definition des Displayanschlusses
@@ -81,22 +115,18 @@ void initialiseDisplay(void) {
   //u8g2.setFontPosTop();
   //u8g2.setFontDirection(0);
 }
+
 //Startbild anzeigen
 void printStartScreen(void) {
-  //u8g2.firstPage();
-  //do {  // Wird benötigt falls Page Buffer statt Full buffer verwendet wird
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
-
-  u8g2.drawBitmap(0, 0, 32, 64, logo);
-  //u8g2.drawFrame(0, 0, u8g2.getDisplayWidth(), u8g2.getDisplayHeight() ); //Rahmen um das Bild zeichnen
-
-
+  u8g2.drawXBMP(0, 0, 256, 64, logo);
   u8g2.sendBuffer(); //Full Buffer Mode: senden
-  //} while ( u8g2.nextPage() ); // Wird benötigt falls Page Buffer statt Full buffer verwendet wird
+
 }
 
-//Grundbild anzeigen, als Funktion  der Einstellungen
-void printHomeScreen(set locsettings, bool locinputState[3]) {
+//Grundbild anzeigen
+void printHomeScreen(bool locinputState[3]) {
+  set locsettings = settings;
   char out[5]; //Zwischenspeicher für Anzeigen auf dem Display
 
   int height = u8g2.getMaxCharHeight() + 3;
@@ -115,9 +145,6 @@ void printHomeScreen(set locsettings, bool locinputState[3]) {
   const int yrow1 = 36;
   const int yrow2 = 24;
 
-
-  //u8g2.firstPage();
-  //do {  // Wird benötigt falls Page Buffer statt Full buffer verwendet wird
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
   //out1
@@ -210,18 +237,19 @@ void printHomeScreen(set locsettings, bool locinputState[3]) {
 
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
-  //} while ( u8g2.nextPage() ); // Wird benötigt falls Page Buffer statt Full buffer verwendet wird
 }
 
-void printMenuScreen(int locMenuCursorPosition) {
+void printMenuScreen(void) {
 
   const int xtext = 10;
   const int xcursor = 0;
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
+  //switches.changeEncoderPrecision(5, 0); //Der Cursor soll Werte zwischen 0 und 5 annehmen
+
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
-  u8g2.drawStr(xcursor, ypos[locMenuCursorPosition], ">"); //Cursor an entsprechender Position anzeigen
+  u8g2.drawStr(xcursor, ypos[encPosition], ">"); //Cursor an entsprechender Position anzeigen
 
   u8g2.drawStr(xtext, ypos[0], "Save Settings");
   u8g2.drawStr(xtext, ypos[1], "Player Setup");
