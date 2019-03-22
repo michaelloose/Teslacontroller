@@ -18,6 +18,7 @@
 //Die eigenen Headerfiles
 #include "ui.hpp"
 
+
 void setup(void) {
   //Display initialisieren und Startbild anzeigen
   initialiseDisplay();

@@ -39,21 +39,94 @@ void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
 //Verwaltung des Encoders
 
 int encPosition = 0;
+byte homeCursorPosition = 0;
 
+//Wird bei erkanntem Drehen des Encoders aufgerufen
 void onEncoderChange(int newValue) {
   Serial.print("Encoder change ");
   Serial.println(newValue);
   encPosition = newValue;
+
+  //Wird gerade das Menü angezeigt?
+  if (currentScreen == 0) {
+    //Ist gerade Source ausgewählt?
+    if (homeCursorPosition % 10 == 1) {
+      //Schreibe den aktuellen Wert in das korrekte Feld.
+      //Die Operation nimmt den Zehner von homeCursorPosition-1, also die entsprechende Ausgangsnummer
+      settings.source[((homeCursorPosition / 10) % 10) - 1] = encPosition;
+    }
+    //Ist CoilType gewählt?
+    if (homeCursorPosition % 10 == 2) {
+      settings.coilType[((homeCursorPosition / 10) % 10) - 1] = encPosition;
+    }
+
+  }
   refreshScreen(currentScreen, inputState);
 }
-
+//Wird bei erkanntem Tastendruck aufgerufen
 void onButtonClicked(uint8_t pin,  bool heldDown) {
+  //Ausgabe fürs Debugging
   Serial.print("S");
   Serial.print(pin);
   Serial.println(heldDown ? " Held" : " Pressed");
+  //Menü/Home Taste
   if (pin == 7 && heldDown == false) {
     if (currentScreen == 0) currentScreen = 1;
     else currentScreen = 0;
+    homeCursorPosition = 0;
+  }
+  //homeCursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
+  //out1 Taste
+  if (pin == 3 && heldDown == false) {
+    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+    if (homeCursorPosition / 10 == 1 ) {
+      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+      //Wenn nein, springe weiter
+      if (homeCursorPosition < 12) homeCursorPosition++;
+      //Wenn ja, geh an den Anfang zurück.
+      else homeCursorPosition = 11;
+    }
+    else homeCursorPosition = 11;
+  }
+  //out2 Taste
+  if (pin == 4 && heldDown == false) {
+    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+    if (homeCursorPosition / 10 == 2) {
+      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+      //Wenn nein, springe weiter
+      if (homeCursorPosition < 22) homeCursorPosition++;
+      //Wenn ja, geh an den Anfang zurück.
+      else homeCursorPosition = 21;
+    }
+    else homeCursorPosition = 21;
+  }
+
+  //out3 Taste
+  if (pin == 5 && heldDown == false) {
+    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+    if (homeCursorPosition / 10 == 3) {
+      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+      //Wenn nein, springe weiter
+      if (homeCursorPosition < 32) homeCursorPosition++;
+      //Wenn ja, geh an den Anfang zurück.
+      else homeCursorPosition = 31;
+    }
+    else homeCursorPosition = 31;
+  }
+
+  //out4 Taste
+  if (pin == 6 && heldDown == false) {
+    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+    if (homeCursorPosition / 10 == 4) {
+      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+      //Wenn nein, springe weiter
+      if (homeCursorPosition < 42) homeCursorPosition++;
+      //Wenn ja, geh an den Anfang zurück.
+      else homeCursorPosition = 41;
+    }
+    else homeCursorPosition = 41;
+
+
   }
   refreshScreen(currentScreen, inputState);
 }
@@ -107,13 +180,17 @@ U8G2_SSD1322_NHD_256X64_F_4W_SW_SPI u8g2(U8G2_R2, /* clock=*/ 52, /* data=*/ 51,
 
 //Display Initialisierung
 void initialiseDisplay(void) {
+  // u8g2.setBusClock(8000000UL);
   u8g2.begin();
-  //u8g2.setFlipMode(1);
+  u8g2.setBusClock(1);
   u8g2.setFont(u8g2_font_6x10_tf);
-  //u8g2.setFontRefHeightExtendedText();
-  //u8g2.setDrawColor(1);
-  //u8g2.setFontPosTop();
-  //u8g2.setFontDirection(0);
+  //Hintergrund transparent
+  u8g2.setFontMode(1);
+  //Schriftfarbe XOR
+  u8g2.setDrawColor(2);
+
+
+
 }
 
 //Startbild anzeigen
@@ -131,89 +208,103 @@ void printHomeScreen(bool locinputState[3]) {
 
   int height = u8g2.getMaxCharHeight() + 3;
   int width = u8g2.getMaxCharWidth();
-  const int xcol1 = 0;
-  const int xcol2 = 55;
-  const int xcol3 = 110;
-  const int xcol4 = 165;
-  const int xcol5 = 228;
-  const int xtop1 = 0;
-  const int xtop2 = 60;
-  const int xtop3 = 120;
+  const byte xcol1 = 0;
+  const byte xcol2 = 54;
+  const byte xcol3 = 108;
+  const byte xcol4 = 162;
+  const byte xcol5 = 224;
+  const byte xtop1 = 0;
+  const byte xtop2 = 60;
+  const byte xtop3 = 120;
 
-  const int ytop = 0;
-  const int ybot = 55;
-  const int yrow1 = 36;
-  const int yrow2 = 24;
+  const byte ytop = 0;
+  const byte ybot = 55;
+  const byte yrow1 = 36;
+  const byte yrow2 = 23;
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
   //out1
   //untere Schaltfläche
-  u8g2.drawRFrame(xcol1, ybot, 27, height, 3);
-  u8g2.drawStr(xcol1 + 2, 64, "out1");
+  u8g2.drawRFrame(xcol1, ybot, 29, height, 4);
+  u8g2.drawStr(xcol1 + 3, 64, "out1");
 
   //CoilType Anzeige
-  u8g2.drawFrame(xcol1, yrow1, 27, height);
-  u8g2.drawStr(xcol1 + 2, yrow1 + height - 3, "ct");
+  //Ist das Feld ausgewählt fülle das Feld aus
+  if (homeCursorPosition == 12) u8g2.drawBox(xcol1, yrow1, 29, height);
+  else u8g2.drawFrame(xcol1, yrow1, 29, height);
+
+  u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "ct");
   intToString(locsettings.coilType[0]).toCharArray(out, 5); //Siehe ein paar Zeilen weiter unten
-  u8g2.drawStr(width * 2 + 2 + xcol1, yrow1 + height - 3, out );
+  u8g2.drawStr(width * 2 + 3 + xcol1, yrow1 + height - 3, out );
+
 
   //Source Anzeige
-  u8g2.drawFrame(xcol1, yrow2, 27, height);
+  if (homeCursorPosition == 11) u8g2.drawBox(xcol1, yrow2, 29, height);
+  else u8g2.drawFrame(xcol1, yrow2, 29, height);
+
   sourceToString(locsettings.source[0]).toCharArray(out, 5); //Vor der Übergabe an drawstr muss der von der Methode "sourceToString" übergebene String in ein Char Array konvertiert werden, die Methode keinen String schluckt. Rückgabe von Arrays ist in c nicht möglich.
-  u8g2.drawStr(2, yrow2 + height - 3, out);
+  u8g2.drawStr(3, yrow2 + height - 3, out);
 
   //out2
   //untere Schaltfläche
-  u8g2.drawRFrame(xcol2, ybot, 27, height, 3);
-  u8g2.drawStr(xcol2 + 2, 64, "out2");
+  u8g2.drawRFrame(xcol2, ybot, 29, height, 4);
+  u8g2.drawStr(xcol2 + 3, 64, "out2");
 
   //CoilType Anzeige
-  u8g2.drawFrame(xcol2, yrow1, 27, height);
-  u8g2.drawStr(xcol2 + 2, yrow1 + height - 3, "ct");
+  if (homeCursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
+  else u8g2.drawFrame(xcol2, yrow1, 29, height);
+  u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "ct");
   intToString(locsettings.coilType[1]).toCharArray(out, 5);
-  u8g2.drawStr(width * 2 + 2 + xcol2, yrow1 + height - 3, out);
+  u8g2.drawStr(width * 2 + 3 + xcol2, yrow1 + height - 3, out);
 
   //Source Anzeige
-  u8g2.drawFrame(xcol2, yrow2, 27, height);
+  if (homeCursorPosition == 21) u8g2.drawBox(xcol2, yrow2, 29, height);
+  else u8g2.drawFrame(xcol2, yrow2, 29, height);
   sourceToString(locsettings.source[1]).toCharArray(out, 5);
-  u8g2.drawStr(xcol2 + 2, yrow2 + height - 3, out);
+  u8g2.drawStr(xcol2 + 3, yrow2 + height - 3, out);
 
   //out3
   //untere Schaltfläche
-  u8g2.drawRFrame(xcol3, ybot, 27, height, 3);
-  u8g2.drawStr(xcol3 + 2, 64, "out3");
+  u8g2.drawRFrame(xcol3, ybot, 29, height, 4);
+  u8g2.drawStr(xcol3 + 3, 64, "out3");
 
   //CoilType Anzeige
-  u8g2.drawFrame(xcol3, yrow1, 27, height);
-  u8g2.drawStr(xcol3 + 2, yrow1 + height - 3, "ct");
+  if (homeCursorPosition == 32) u8g2.drawBox(xcol3, yrow1, 29, height);
+  else u8g2.drawFrame(xcol3, yrow1, 29, height);
+
+  u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "ct");
   intToString(locsettings.coilType[2]).toCharArray(out, 5);
-  u8g2.drawStr(width * 2 + 2 + xcol3, yrow1 + height - 3, out);
+  u8g2.drawStr(width * 2 + 3 + xcol3, yrow1 + height - 3, out);
 
   //Source Anzeige
-  u8g2.drawFrame(xcol3, yrow2, 27, height);
+  if (homeCursorPosition == 31) u8g2.drawBox(xcol3, yrow2, 29, height);
+  else u8g2.drawFrame(xcol3, yrow2, 29, height);
   sourceToString(locsettings.source[2]).toCharArray(out, 5);
-  u8g2.drawStr(xcol3 + 2, yrow2 + height - 3, out);
+  u8g2.drawStr(xcol3 + 3, yrow2 + height - 3, out);
 
   //out4
   //untere Schaltfläche
-  u8g2.drawRFrame(xcol4, ybot, 27, height, 3);
-  u8g2.drawStr(xcol4 + 2, 64, "out4");
+  u8g2.drawRFrame(xcol4, ybot, 29, height, 4);
+  u8g2.drawStr(xcol4 + 3, 64, "out4");
 
   //CoilType Anzeige
-  u8g2.drawFrame(xcol4, yrow1, 27, height);
-  u8g2.drawStr(xcol4 + 2, yrow1 + height - 3, "ct");
+  if (homeCursorPosition == 42) u8g2.drawBox(xcol4, yrow1, 29, height);
+  else u8g2.drawFrame(xcol4, yrow1, 29, height);
+
+  u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "ct");
   intToString(locsettings.coilType[3]).toCharArray(out, 5);
-  u8g2.drawStr(width * 2 + 2 + xcol4, yrow1 + height - 3, out);
+  u8g2.drawStr(width * 2 + 3 + xcol4, yrow1 + height - 3, out);
 
   //Source Anzeige
-  u8g2.drawFrame(xcol4, yrow2, 27, height);
+  if (homeCursorPosition == 41) u8g2.drawBox(xcol4, yrow2, 29, height);
+  else u8g2.drawFrame(xcol4, yrow2, 29, height);
   sourceToString(locsettings.source[3]).toCharArray(out, 5);
-  u8g2.drawStr(xcol4 + 2, yrow2 + height - 3, out);
+  u8g2.drawStr(xcol4 + 3, yrow2 + height - 3, out);
 
   //menu
-  u8g2.drawRFrame(xcol5, ybot, 27, height, 3);
-  u8g2.drawStr(xcol5 + 2, ybot + 9, "menu");
+  u8g2.drawRFrame(xcol5, ybot, 29, height, 4);
+  u8g2.drawStr(xcol5 + 3, ybot + 9, "menu");
 
   //Kopfzeile
 
@@ -305,7 +396,7 @@ String sourceToString (int source) {
     case 10:
       out = "ANI1";
       break;
-    case 12:
+    case 11:
       out = "ANI2";
       break;
     default:
