@@ -7,7 +7,7 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 3/2019
-//Stand: 19/03/2019
+//Stand: 01/04/2019
 //////////////////////////////////////////////////////////////////////
 
 bool inputState[3] = {0, 0, 0}; //Die Anzeigen ob ein Eingang aktiv ist. Die sollen nicht hier bleiben, sondern kommen später dahin wos mehr sinn macht.
@@ -18,6 +18,54 @@ set settings; //Variable zum Speichern der Einstellungen erstellen
 
 set getSettings(void) {
   return settings;
+}
+
+//Speichern die aktuelle encoder Drehrichtung
+bool encplus = true;
+bool encminus = true;
+byte encPosition = 0;
+byte encMax = 5;
+//Aktuell ausgewähltes Feld
+byte cursorPosition = 0;
+
+
+//Interrupt Service Routine für Benutzereingabe
+volatile bool userInput = false;
+void pcf8575ISR() {
+  userInput = true;
+}
+//Wird ständig gepolled. Prüft ob das Bit für die Benutzereingabe gesetzt wurde.
+void pollUserInput() {
+
+  if (userInput) {
+    userInput = false;
+    //Auslesen der Daten über i2c
+    Wire.requestFrom(pcf8575adress, 1);
+    byte incomingByte = Wire.read();
+
+    //Encoder in Ruhestellung?
+    if (incomingByte == 0b00000011) {
+      encplus = true;
+      encminus = true;
+    }
+    //Encoder im Uhrzeigersinn?
+    if ((incomingByte == 0b00000001) && encminus) {
+      encplus = false;
+      onEncoderChange(true);
+    }
+    //Encoder im Gegenuhrzeigersinn?
+    if ((incomingByte == 0b00000010) && encplus ) {
+      encminus = false;
+      onEncoderChange(false);
+    }
+    //Taste gedrückt?
+    if (incomingByte == 0b00000111) onButtonClicked(6);
+    if (incomingByte == 0b00001011) onButtonClicked(1);
+    if (incomingByte == 0b00010011) onButtonClicked(2);
+    if (incomingByte == 0b00100011) onButtonClicked(3);
+    if (incomingByte == 0b01000011) onButtonClicked(4);
+    if (incomingByte == 0b10000011) onButtonClicked(5);
+  }
 }
 
 //Aktuell angezeigtes Bild
@@ -38,94 +86,131 @@ void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
 
 //Verwaltung des Encoders
 
-int encPosition = 0;
-byte homeCursorPosition = 0;
+
 
 //Wird bei erkanntem Drehen des Encoders aufgerufen
-void onEncoderChange(int newValue) {
+void onEncoderChange(bool direction) {
   Serial.print("Encoder change ");
-  Serial.println(newValue);
-  encPosition = newValue;
+  if (direction) {
+    if (encPosition < encMax) encPosition++;
+    else encPosition = 0;
+  }
+  else {
+    if (encPosition > 0) encPosition--;
+    else encPosition = encMax;
+  }
+  Serial.println(encPosition);
 
   //Wird gerade das Menü angezeigt?
   if (currentScreen == 0) {
     //Ist gerade Source ausgewählt?
-    if (homeCursorPosition % 10 == 1) {
+    if (cursorPosition % 10 == 1) {
       //Schreibe den aktuellen Wert in das korrekte Feld.
-      //Die Operation nimmt den Zehner von homeCursorPosition-1, also die entsprechende Ausgangsnummer
-      settings.source[((homeCursorPosition / 10) % 10) - 1] = encPosition;
+      //Die Operation nimmt den Zehner von cursorPosition-1, also die entsprechende Ausgangsnummer
+
+      if (direction) {
+        if (settings.source[((cursorPosition / 10) % 10) - 1] < 11) settings.source[((cursorPosition / 10) % 10) - 1]++;
+        else settings.source[((cursorPosition / 10) % 10) - 1] = 0;
+      }
+      else {
+        if (settings.source[((cursorPosition / 10) % 10) - 1] > 0) settings.source[((cursorPosition / 10) % 10) - 1]--;
+        else settings.source[((cursorPosition / 10) % 10) - 1] = 11;
+      }
     }
     //Ist CoilType gewählt?
-    if (homeCursorPosition % 10 == 2) {
-      settings.coilType[((homeCursorPosition / 10) % 10) - 1] = encPosition;
+    if (cursorPosition % 10 == 2) {
+      if (direction) {
+
+        if (settings.coilType[((cursorPosition / 10) % 10) - 1] < 20) settings.coilType[((cursorPosition / 10) % 10) - 1]++;
+        else settings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
+      }
+      else {
+        if (settings.coilType[((cursorPosition / 10) % 10) - 1] > 0) settings.coilType[((cursorPosition / 10) % 10) - 1]--;
+        else settings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
+      }
     }
 
   }
   refreshScreen(currentScreen, inputState);
 }
 //Wird bei erkanntem Tastendruck aufgerufen
-void onButtonClicked(uint8_t pin,  bool heldDown) {
+void onButtonClicked(uint8_t pin) {
   //Ausgabe fürs Debugging
   Serial.print("S");
   Serial.print(pin);
-  Serial.println(heldDown ? " Held" : " Pressed");
   //Menü/Home Taste
-  if (pin == 7 && heldDown == false) {
+  if (pin == 5) {
+    cursorPosition = 0;
+    encPosition = 0;
+
     if (currentScreen == 0) currentScreen = 1;
     else currentScreen = 0;
-    homeCursorPosition = 0;
-  }
-  //homeCursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
-  //out1 Taste
-  if (pin == 3 && heldDown == false) {
-    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
-    if (homeCursorPosition / 10 == 1 ) {
-      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
-      //Wenn nein, springe weiter
-      if (homeCursorPosition < 12) homeCursorPosition++;
-      //Wenn ja, geh an den Anfang zurück.
-      else homeCursorPosition = 11;
-    }
-    else homeCursorPosition = 11;
-  }
-  //out2 Taste
-  if (pin == 4 && heldDown == false) {
-    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
-    if (homeCursorPosition / 10 == 2) {
-      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
-      //Wenn nein, springe weiter
-      if (homeCursorPosition < 22) homeCursorPosition++;
-      //Wenn ja, geh an den Anfang zurück.
-      else homeCursorPosition = 21;
-    }
-    else homeCursorPosition = 21;
   }
 
-  //out3 Taste
-  if (pin == 5 && heldDown == false) {
-    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
-    if (homeCursorPosition / 10 == 3) {
-      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
-      //Wenn nein, springe weiter
-      if (homeCursorPosition < 32) homeCursorPosition++;
-      //Wenn ja, geh an den Anfang zurück.
-      else homeCursorPosition = 31;
+
+  //Grundbild
+  if (currentScreen == 0) {
+    //Auswahl der Felder
+    //cursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
+    //out1 Taste
+    if (pin == 1) {
+      //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+      if (cursorPosition / 10 == 1 ) {
+        //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+        //Wenn nein, springe weiter
+        if (cursorPosition < 12) cursorPosition++;
+        //Wenn ja, geh an den Anfang zurück.
+        else cursorPosition = 11;
+      }
+      else cursorPosition = 11;
     }
-    else homeCursorPosition = 31;
+    //out2 Taste
+    if (pin == 2) {
+      //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+      if (cursorPosition / 10 == 2) {
+        //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+        //Wenn nein, springe weiter
+        if (cursorPosition < 22) cursorPosition++;
+        //Wenn ja, geh an den Anfang zurück.
+        else cursorPosition = 21;
+      }
+      else cursorPosition = 21;
+    }
+
+    //out3 Taste
+    if (pin == 3) {
+      //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+      if (cursorPosition / 10 == 3) {
+        //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+        //Wenn nein, springe weiter
+        if (cursorPosition < 32) cursorPosition++;
+        //Wenn ja, geh an den Anfang zurück.
+        else cursorPosition = 31;
+      }
+      else cursorPosition = 31;
+    }
+
+    //out4 Taste
+    if (pin == 4) {
+      //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
+      if (cursorPosition / 10 == 4) {
+        //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
+        //Wenn nein, springe weiter
+        if (cursorPosition < 42) cursorPosition++;
+        //Wenn ja, geh an den Anfang zurück.
+        else cursorPosition = 41;
+      }
+      else cursorPosition = 41;
+    }
   }
-
-  //out4 Taste
-  if (pin == 6 && heldDown == false) {
-    //Ist der Cursor bereits in der Spalte die mit dem Taster gedrückt wurde?
-    if (homeCursorPosition / 10 == 4) {
-      //Ist der Cursor schon am höchsten Wert der Spalte angekommen?
-      //Wenn nein, springe weiter
-      if (homeCursorPosition < 42) homeCursorPosition++;
-      //Wenn ja, geh an den Anfang zurück.
-      else homeCursorPosition = 41;
+  // MENÜ
+  if (currentScreen == 1) {
+    //Encoder gedrückt
+    if (pin == 6) {
+      //Gerade "SaveSettings" gewählt?
+      if (encPosition == 0) saveSettings(eeAddress, settings);
+      currentScreen = 0;
     }
-    else homeCursorPosition = 41;
-
 
   }
   refreshScreen(currentScreen, inputState);
@@ -158,19 +243,12 @@ void loadSettings() {
 //Initialisierung der Eingabeknöpfe
 void initialiseButtons(void) {
   Wire.begin();
-  switches.initialiseInterrupt(ioFrom8574(pcf8575adress, 2), false);
-
-  setupRotaryEncoderWithInterrupt(0, 1, onEncoderChange);
-  Wire.requestFrom(pcf8575adress, 1); //Erste Abfrage der I2C Schnittstelle damit der PCF8575 die Interrupts korrekt setzt.
-
-  switches.changeEncoderPrecision(255, 0);
-  switches.addSwitch(2, onButtonClicked);
-  switches.addSwitch(3, onButtonClicked);
-  switches.addSwitch(4, onButtonClicked);
-  switches.addSwitch(5, onButtonClicked);
-  switches.addSwitch(6, onButtonClicked);
-  switches.addSwitch(7, onButtonClicked);
+  pinMode(2, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(2), pcf8575ISR, FALLING);
+  Wire.requestFrom(pcf8575adress, 1);
   Serial.println("PCF8575 erfolgreich initialisiert!");
+  //Nach erfolgreichem Initialisieren soll das aktuelle Bild angezeigt werden
+  refreshScreen(currentScreen, inputState);
 }
 
 //Definition des Displayanschlusses
@@ -231,7 +309,7 @@ void printHomeScreen(bool locinputState[3]) {
 
   //CoilType Anzeige
   //Ist das Feld ausgewählt fülle das Feld aus
-  if (homeCursorPosition == 12) u8g2.drawBox(xcol1, yrow1, 29, height);
+  if (cursorPosition == 12) u8g2.drawBox(xcol1, yrow1, 29, height);
   else u8g2.drawFrame(xcol1, yrow1, 29, height);
 
   u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "ct");
@@ -240,7 +318,7 @@ void printHomeScreen(bool locinputState[3]) {
 
 
   //Source Anzeige
-  if (homeCursorPosition == 11) u8g2.drawBox(xcol1, yrow2, 29, height);
+  if (cursorPosition == 11) u8g2.drawBox(xcol1, yrow2, 29, height);
   else u8g2.drawFrame(xcol1, yrow2, 29, height);
 
   sourceToString(locsettings.source[0]).toCharArray(out, 5); //Vor der Übergabe an drawstr muss der von der Methode "sourceToString" übergebene String in ein Char Array konvertiert werden, die Methode keinen String schluckt. Rückgabe von Arrays ist in c nicht möglich.
@@ -252,14 +330,14 @@ void printHomeScreen(bool locinputState[3]) {
   u8g2.drawStr(xcol2 + 3, 64, "out2");
 
   //CoilType Anzeige
-  if (homeCursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
+  if (cursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
   else u8g2.drawFrame(xcol2, yrow1, 29, height);
   u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "ct");
   intToString(locsettings.coilType[1]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol2, yrow1 + height - 3, out);
 
   //Source Anzeige
-  if (homeCursorPosition == 21) u8g2.drawBox(xcol2, yrow2, 29, height);
+  if (cursorPosition == 21) u8g2.drawBox(xcol2, yrow2, 29, height);
   else u8g2.drawFrame(xcol2, yrow2, 29, height);
   sourceToString(locsettings.source[1]).toCharArray(out, 5);
   u8g2.drawStr(xcol2 + 3, yrow2 + height - 3, out);
@@ -270,7 +348,7 @@ void printHomeScreen(bool locinputState[3]) {
   u8g2.drawStr(xcol3 + 3, 64, "out3");
 
   //CoilType Anzeige
-  if (homeCursorPosition == 32) u8g2.drawBox(xcol3, yrow1, 29, height);
+  if (cursorPosition == 32) u8g2.drawBox(xcol3, yrow1, 29, height);
   else u8g2.drawFrame(xcol3, yrow1, 29, height);
 
   u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "ct");
@@ -278,7 +356,7 @@ void printHomeScreen(bool locinputState[3]) {
   u8g2.drawStr(width * 2 + 3 + xcol3, yrow1 + height - 3, out);
 
   //Source Anzeige
-  if (homeCursorPosition == 31) u8g2.drawBox(xcol3, yrow2, 29, height);
+  if (cursorPosition == 31) u8g2.drawBox(xcol3, yrow2, 29, height);
   else u8g2.drawFrame(xcol3, yrow2, 29, height);
   sourceToString(locsettings.source[2]).toCharArray(out, 5);
   u8g2.drawStr(xcol3 + 3, yrow2 + height - 3, out);
@@ -289,7 +367,7 @@ void printHomeScreen(bool locinputState[3]) {
   u8g2.drawStr(xcol4 + 3, 64, "out4");
 
   //CoilType Anzeige
-  if (homeCursorPosition == 42) u8g2.drawBox(xcol4, yrow1, 29, height);
+  if (cursorPosition == 42) u8g2.drawBox(xcol4, yrow1, 29, height);
   else u8g2.drawFrame(xcol4, yrow1, 29, height);
 
   u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "ct");
@@ -297,7 +375,7 @@ void printHomeScreen(bool locinputState[3]) {
   u8g2.drawStr(width * 2 + 3 + xcol4, yrow1 + height - 3, out);
 
   //Source Anzeige
-  if (homeCursorPosition == 41) u8g2.drawBox(xcol4, yrow2, 29, height);
+  if (cursorPosition == 41) u8g2.drawBox(xcol4, yrow2, 29, height);
   else u8g2.drawFrame(xcol4, yrow2, 29, height);
   sourceToString(locsettings.source[3]).toCharArray(out, 5);
   u8g2.drawStr(xcol4 + 3, yrow2 + height - 3, out);
@@ -336,7 +414,7 @@ void printMenuScreen(void) {
   const int xcursor = 0;
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
-  //switches.changeEncoderPrecision(5, 0); //Der Cursor soll Werte zwischen 0 und 5 annehmen
+  encMax = 5; //Der Cursor soll Werte zwischen 0 und 5 annehmen
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
@@ -350,14 +428,15 @@ void printMenuScreen(void) {
   u8g2.drawStr(xtext, ypos[5], "Credits");
 
   //home button
-  u8g2.drawRFrame(228, 55, 27, 13, 3);
-  u8g2.drawStr(230, 64, "home");
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
 
 void saveSettings(int loceeAddress, set locSettings) {
   EEPROM.put(loceeAddress , locSettings);
+  Serial.print("Saving Complete");
 }
 
 //wandelt die Nummer des Eingangstyps in einen lesbaren String um

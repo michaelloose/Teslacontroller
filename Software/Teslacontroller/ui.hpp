@@ -2,10 +2,9 @@
 #include <U8g2lib.h>
 #include <EEPROM.h>
 #include <SPI.h>
-#include <avr/pgmspace.h>
-
-#include<IoAbstraction.h>
-#include<IoAbstractionWire.h>
+#include <Wire.h>
+//#include<IoAbstraction.h>
+//#include<IoAbstractionWire.h>
 
 #include "logo.cpp"
 
@@ -18,12 +17,13 @@ struct set {
 };
 set getSettings(void);
 //Methoden zum Einlesen der Knöpfe
+void pollUserInput(void);
 void initialiseButtons(void);
 bool getButtonPressed(void);
 byte getCurrentScreen(void);
 
-void onButtonClicked(uint8_t,  bool );
-void onEncoderChange(int );
+void onButtonClicked(uint8_t);
+void onEncoderChange(bool);
 
 //Methoden zur Ausgabe auf dem Display
 void refreshScreen(byte, bool[3]);

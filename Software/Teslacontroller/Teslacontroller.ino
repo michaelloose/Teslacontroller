@@ -7,7 +7,7 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 3/2019
-//Stand: 19/03/2019
+//Stand: 01/04/2019
 //////////////////////////////////////////////////////////////////////
 
 //Bei der Benennung von Variablen wird ein striktes Schema verwendet:
@@ -38,8 +38,8 @@ void setup(void) {
 }
 
 void loop(void) {
-  taskManager.runLoop();
-
+  //taskManager.runLoop();
+  pollUserInput();
 
 
 }
