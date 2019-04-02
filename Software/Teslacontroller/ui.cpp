@@ -208,8 +208,11 @@ void onButtonClicked(uint8_t pin) {
     //Encoder gedrückt
     if (pin == 6) {
       //Gerade "SaveSettings" gewählt?
-      if (encPosition == 0) saveSettings(eeAddress, settings);
-      currentScreen = 0;
+      if (encPosition == 0){
+        saveSettings(eeAddress, settings);
+        currentScreen = 0;
+      }
+      
     }
 
   }
