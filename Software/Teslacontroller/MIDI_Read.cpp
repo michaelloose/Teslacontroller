@@ -12,7 +12,9 @@ float frequency(float n) {
 }
 byte incomingByte = 0x00; //DUMMY!! Wie fragt man den Seriellen Eingang des XMCs ab?
 
-float readMidi(byte incomingByte) {
+float readMidi(byte stateChannel, byte byte1, byte byte2) {
+  
+  byte incomingByte; //
   static byte note;
   static byte lastCommand = MIDI_IGNORE;
   static byte state;

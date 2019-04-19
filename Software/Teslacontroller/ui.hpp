@@ -3,8 +3,8 @@
 #include <EEPROM.h>
 #include <SPI.h>
 #include <Wire.h>
-//#include<IoAbstraction.h>
-//#include<IoAbstractionWire.h>
+
+#include "mediaplayer.hpp"
 
 #include "logo.cpp"
 
@@ -31,6 +31,7 @@ void initialiseDisplay(void);
 void printStartScreen(void);
 void printHomeScreen(bool[3]);
 void printMenuScreen(void);
+void printPlayerFileScreen(void);
 
 //Aktionen
 void loadSettings();
@@ -38,4 +39,4 @@ void saveSettings(int, set);
 
 //Konversionsmethoden
 String sourceToString (int);
-String intToString(int);
+String intToString(int);                                                        //String(var, DEC) benutzen

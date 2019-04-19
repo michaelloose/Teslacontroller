@@ -1,5 +1,7 @@
 #include<arduino.h>
 
+float readMidi(byte, byte, byte);
+
 // Aktiver MIDI Kanal, 0x00 - 0x0F
 #define responseChannel 0x00
 // ueberschreibt die Kanalselektierung

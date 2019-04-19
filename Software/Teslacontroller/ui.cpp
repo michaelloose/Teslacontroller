@@ -10,6 +10,7 @@
 //Stand: 01/04/2019
 //////////////////////////////////////////////////////////////////////
 
+
 bool inputState[3] = {0, 0, 0}; //Die Anzeigen ob ein Eingang aktiv ist. Die sollen nicht hier bleiben, sondern kommen später dahin wos mehr sinn macht.
 
 #include "ui.hpp"
@@ -80,6 +81,9 @@ void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
       break;
     case 1:
       printMenuScreen();
+      break;
+    case 2:
+      printPlayerFileScreen();
       break;
   }
 }
@@ -207,15 +211,28 @@ void onButtonClicked(uint8_t pin) {
   if (currentScreen == 1) {
     //Encoder gedrückt
     if (pin == 6) {
+
       //Gerade "SaveSettings" gewählt?
-      if (encPosition == 0){
+      if (encPosition == 0) {
         saveSettings(eeAddress, settings);
         currentScreen = 0;
       }
-      
+      //Gerade "Player File gewählt?
+      if (encPosition == 1) {
+        //SD ohne Fehler gelesen
+        if (initializeSD() == -1) {
+          printPlayerFileScreen();
+          currentScreen = 2;
+        }
+        //SD Lesefehler
+        else {
+          //Hier soll noch einn FEHLER POPUP eingeblendet werden                                                                                      TBD
+          currentScreen = 0;
+        }
+      }
     }
-
   }
+
   refreshScreen(currentScreen, inputState);
 }
 void loadSettings() {
@@ -424,11 +441,34 @@ void printMenuScreen(void) {
   u8g2.drawStr(xcursor, ypos[encPosition], ">"); //Cursor an entsprechender Position anzeigen
 
   u8g2.drawStr(xtext, ypos[0], "Save Settings");
-  u8g2.drawStr(xtext, ypos[1], "Player Setup");
+  u8g2.drawStr(xtext, ypos[1], "Player File");
   u8g2.drawStr(xtext, ypos[2], "Coil Setup");
   u8g2.drawStr(xtext, ypos[3], "Coil Test/Manual Mode");
   u8g2.drawStr(xtext, ypos[4], "Self Test");
   u8g2.drawStr(xtext, ypos[5], "Credits");
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+void printPlayerFileScreen(void) {
+
+
+  const int xtext = 10;
+  const int xcursor = 0;
+  const int ypos[6] = {10, 20, 30, 40, 50, 60};
+
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+  char charBuffer[30];
+  u8g2.drawStr(xcursor, ypos[encPosition], ">"); //Cursor an entsprechender Position anzeigen
+  for (int i = 0; i < 6; i++)
+  {
+    getFileList(i).toCharArray(charBuffer, 30);
+    u8g2.drawStr(xtext, ypos[i], charBuffer);
+
+  }
 
   //home button
   u8g2.drawRFrame(224, 55, 29, 13, 4);
