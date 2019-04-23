@@ -24,10 +24,13 @@ set getSettings(void) {
 //Speichern die aktuelle encoder Drehrichtung
 bool encplus = true;
 bool encminus = true;
-byte encPosition = 0;
-byte encMax = 5;
+byte encpos = 0;
+byte encmax = 5;
+byte scrollpos = 0;
 //Aktuell ausgewähltes Feld
 byte cursorPosition = 0;
+//Anzahl der geladenen Dateien
+byte numberOfLoadedFiles = 0;
 
 
 //Interrupt Service Routine für Benutzereingabe
@@ -40,6 +43,7 @@ void pollUserInput() {
 
   if (userInput) {
     userInput = false;
+
     //Auslesen der Daten über i2c
     Wire.requestFrom(pcf8575adress, 1);
     byte incomingByte = Wire.read();
@@ -72,6 +76,7 @@ void pollUserInput() {
 //Aktuell angezeigtes Bild
 //0: Grundbild
 //1: Menü
+//2: Player File Auswahl
 byte currentScreen = 0;
 
 void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
@@ -95,15 +100,58 @@ void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
 //Wird bei erkanntem Drehen des Encoders aufgerufen
 void onEncoderChange(bool direction) {
   Serial.print("Encoder change ");
-  if (direction) {
-    if (encPosition < encMax) encPosition++;
-    else encPosition = 0;
+  // Ist gerade die Dateiauswahl aktiv?
+  // Dateiliste kann gescrolled werden
+  if (currentScreen == 2) {
+    //Drehung im Uhrzeigersinn
+    if (direction) {
+      //Oberhalb des unteren Displayendes
+      if (encpos < encmax && encpos < (numberOfLoadedFiles - 1)) encpos++;
+      //In der letzten Zeile
+      else {
+        //Ist die Liste noch nicht zu Ende weiterscrollen
+        if (numberOfLoadedFiles > (scrollpos + encpos + 1)) scrollpos++;
+        //Ist die Liste zu Ende wieder von vorne anfangen
+        else {
+          encpos = 0;
+          scrollpos = 0;
+        }
+      }
+    }
+    else {
+      //Drehung im Gegenuhrzeigersinn
+      if (encpos > 0) encpos--;
+      //In der ersten Zeile
+      else {
+        //Ist die Liste noch nicht zu Ende weiterscrollen
+        if (scrollpos > 0) scrollpos--;
+        //Ist die Liste zu Ende wieder von vorne anfangen
+        else {
+          //Sind weniger gleich 6 Elemente in der Liste?
+          if (numberOfLoadedFiles <= 6) {
+            scrollpos = 0;
+            encpos = numberOfLoadedFiles - 1 ;
+          }
+          //Sind mehr  als 6 Elemente in der Liste?
+          else {
+            scrollpos = numberOfLoadedFiles - 6;
+            encpos = encmax;
+          }
+        }
+      }
+    }
   }
   else {
-    if (encPosition > 0) encPosition--;
-    else encPosition = encMax;
+    if (direction) {
+      if (encpos < encmax) encpos++;
+      else encpos = 0;
+    }
+    else {
+      if (encpos > 0) encpos--;
+      else encpos = encmax;
+    }
   }
-  Serial.println(encPosition);
+  Serial.println(encpos);
 
   //Wird gerade das Menü angezeigt?
   if (currentScreen == 0) {
@@ -139,13 +187,15 @@ void onEncoderChange(bool direction) {
 }
 //Wird bei erkanntem Tastendruck aufgerufen
 void onButtonClicked(uint8_t pin) {
+
+  Serial.println(getCurrentFile());
   //Ausgabe fürs Debugging
   Serial.print("S");
   Serial.print(pin);
   //Menü/Home Taste
   if (pin == 5) {
     cursorPosition = 0;
-    encPosition = 0;
+    encpos = 0;
 
     if (currentScreen == 0) currentScreen = 1;
     else currentScreen = 0;
@@ -154,6 +204,12 @@ void onButtonClicked(uint8_t pin) {
 
   //Grundbild
   if (currentScreen == 0) {
+
+
+    //Play Taste. Wenn im Moment Pause aktiv ist und eine Datei gewählt ist soll die Wiedergabe beginnen.
+    if (pin == 6 && !getPlayingState() && (getFileList(getCurrentFile()) != 0)) playFile();
+    //Wenn eine Taste gefrückt wird soll die Wiedergabe pausiert werden.
+    else pauseFile();
     //Auswahl der Felder
     //cursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
     //out1 Taste
@@ -213,14 +269,19 @@ void onButtonClicked(uint8_t pin) {
     if (pin == 6) {
 
       //Gerade "SaveSettings" gewählt?
-      if (encPosition == 0) {
+      if (encpos == 0) {
         saveSettings(eeAddress, settings);
         currentScreen = 0;
       }
       //Gerade "Player File gewählt?
-      if (encPosition == 1) {
+      if (encpos == 1) {
+        encpos = 0;
         //SD ohne Fehler gelesen
         if (initializeSD() == -1) {
+          //Anzahl der geladenen Dateien ermitteln
+          while (getFileList(numberOfLoadedFiles) != 0) {
+            numberOfLoadedFiles++;
+          }
           printPlayerFileScreen();
           currentScreen = 2;
         }
@@ -231,6 +292,11 @@ void onButtonClicked(uint8_t pin) {
         }
       }
     }
+  }
+  //Bei der Dateiauswahl die aktuelle Datei übernehmen
+  if (currentScreen == 2 && pin == 6 && numberOfLoadedFiles > 0) {
+    setCurrentFile(scrollpos + encpos);
+    //currentScreen = 0;
   }
 
   refreshScreen(currentScreen, inputState);
@@ -314,6 +380,7 @@ void printHomeScreen(bool locinputState[3]) {
   const byte xtop1 = 0;
   const byte xtop2 = 60;
   const byte xtop3 = 120;
+  const byte xtop4 = 180;
 
   const byte ytop = 0;
   const byte ybot = 55;
@@ -424,6 +491,17 @@ void printHomeScreen(bool locinputState[3]) {
   if (locinputState[2]) u8g2.drawDisc(xtop3 + width * 7 + 8, 6, 3, U8G2_DRAW_ALL);
   else u8g2.drawCircle(xtop3 + width * 7 + 8, 6, 3, U8G2_DRAW_ALL);
 
+  //Aktuell gewählte Datei
+  char charBuffer[12];
+  getFileList(getCurrentFile()).toCharArray(charBuffer, 12);
+  u8g2.drawStr(xtop4, ytop + 9, charBuffer);
+
+  //Playbutton
+  u8g2.setFont(u8g2_font_open_iconic_all_4x_t);
+
+  if (getPlayingState()) u8g2.drawGlyph(220, 48, 0x00d2);
+  else u8g2.drawGlyph(220, 48, 0x00d3);
+  u8g2.setFont(u8g2_font_6x10_tf);
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
@@ -434,11 +512,11 @@ void printMenuScreen(void) {
   const int xcursor = 0;
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
-  encMax = 5; //Der Cursor soll Werte zwischen 0 und 5 annehmen
+  encmax = 5; //Der Cursor soll Werte zwischen 0 und 5 annehmen
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
-  u8g2.drawStr(xcursor, ypos[encPosition], ">"); //Cursor an entsprechender Position anzeigen
+  u8g2.drawStr(xcursor, ypos[encpos], ">"); //Cursor an entsprechender Position anzeigen
 
   u8g2.drawStr(xtext, ypos[0], "Save Settings");
   u8g2.drawStr(xtext, ypos[1], "Player File");
@@ -461,11 +539,18 @@ void printPlayerFileScreen(void) {
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
-  char charBuffer[30];
-  u8g2.drawStr(xcursor, ypos[encPosition], ">"); //Cursor an entsprechender Position anzeigen
+  char charBuffer[32];
+  u8g2.drawStr(xcursor, ypos[encpos], ">"); //Cursor an entsprechender Position anzeigen
+  //Anzeige der Anzahl der Dateien und der Nummer der ausgewählten Datei
+  u8g2.setCursor(227, 10);
+  u8g2.print(scrollpos + encpos + 1);
+  u8g2.print("/");
+  u8g2.print(numberOfLoadedFiles);
+
+  //Ausgabe der aktuell anzuzeigenden Dateien auf dem Display
   for (int i = 0; i < 6; i++)
   {
-    getFileList(i).toCharArray(charBuffer, 30);
+    getFileList(i + scrollpos).toCharArray(charBuffer, 32);
     u8g2.drawStr(xtext, ypos[i], charBuffer);
 
   }

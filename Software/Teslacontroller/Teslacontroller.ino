@@ -17,6 +17,7 @@
 
 //Die eigenen Headerfiles
 #include "ui.hpp"
+#include "mediaplayer.hpp"
 
 
 void setup(void) {
@@ -40,6 +41,7 @@ void setup(void) {
 void loop(void) {
   //taskManager.runLoop();
   pollUserInput();
+  pollMediaPlayer();
 
 
 }

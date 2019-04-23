@@ -16,23 +16,42 @@
 
 String fileList[64];
 byte currentFile = 0;
+boolean playing = false;
 
-int initializeSD(void){
+int initializeSD(void) {
 
-fileList[0] = "File 1";
-fileList[1] = "File 2";
-fileList[2] = "File 3";
+  fileList[0] = "File 1";
+  fileList[1] = "File 2";
+  fileList[2] = "File 3";
+  fileList[3] = "File 4";
+  fileList[4] = "File 5";
+  fileList[5] = "File 6";
+  fileList[6] = "File 7";
+  fileList[7] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
-return -1;
-  
+
+  return -1; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
+
 }
 
-void playFile(void){
-  
+//Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit 
+void playFile(void) {
+  playing = true;
+
 }
 
-void pauseFile(void){
-  
+void pauseFile(void) {
+  playing = false;
+
+}
+
+void pollMediaPlayer(void){
+  //Wenn das playing Bit gesetzt ist läuft diese Schleife mit der Main Loop mit
+  if(playing){
+
+  //Hierein gehört der ganze Code zum Abspielen!
+    
+  }
 }
 
 
@@ -41,12 +60,15 @@ void pauseFile(void){
 
 
 //Ab hier sind nur noch die Getter/Settermethoden
-String getFileList(int k){
+String getFileList(byte k) {
   return fileList[k];
 }
-byte getCurrentFile(void){
-return currentFile; 
+byte getCurrentFile(void) {
+  return currentFile;
 }
-void setCurrentFile(byte i){
-currentFile = i; 
+void setCurrentFile(byte i) {
+  currentFile = i;
+}
+bool getPlayingState(void) {
+  return playing;
 }

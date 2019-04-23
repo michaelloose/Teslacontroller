@@ -5,7 +5,6 @@
 #include <Wire.h>
 
 #include "mediaplayer.hpp"
-
 #include "logo.cpp"
 
 #define pcf8575adress 0x20
@@ -39,4 +38,4 @@ void saveSettings(int, set);
 
 //Konversionsmethoden
 String sourceToString (int);
-String intToString(int);                                                        //String(var, DEC) benutzen
+String intToString(int);                                                        //Mögliche Verbesserung: String(var, DEC) benutzen
