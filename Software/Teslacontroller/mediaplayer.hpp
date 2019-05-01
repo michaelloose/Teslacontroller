@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 #include "MIDI_Read.hpp"
-
+#include <SPI.h>
+#include <SD.h>
 
 //Getter/Settermethoden
 String getFileList(byte);

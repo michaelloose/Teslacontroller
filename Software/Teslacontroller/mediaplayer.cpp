@@ -18,7 +18,19 @@ String fileList[64];
 byte currentFile = 0;
 boolean playing = false;
 
-int initializeSD(void) {
+const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
+const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
+
+int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
+  byte fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
+  int SDslot = SDcard;
+  
+  if (!SD.begin(SDslot)) {
+     SDslot = mSDcard;
+  }
+  if (!SD.begin(SDslot)) {
+    fehlercode = 1;
+  }
 
   fileList[0] = "File 1";
   fileList[1] = "File 2";
@@ -30,7 +42,7 @@ int initializeSD(void) {
   fileList[7] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 
-  return -1; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
+  return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
 }
 
