@@ -28,9 +28,14 @@ void onEncoderChange(bool);
 void refreshScreen(byte, bool[3]);
 void initialiseDisplay(void);
 void printStartScreen(void);
+
 void printHomeScreen(bool[3]);
 void printMenuScreen(void);
 void printPlayerFileScreen(void);
+void printCoilSetupScreen(void);
+void printCoilTestScreen(void);
+void printSelfTestScreen(void);
+void printCreditsScreen(void);
 
 //Aktionen
 void loadSettings();

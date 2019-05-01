@@ -77,6 +77,11 @@ void pollUserInput() {
 //0: Grundbild
 //1: Menü
 //2: Player File Auswahl
+//3: Coil Setup
+//4: Coil Test/Manual Mode
+//5: Self Test
+//6: Credits
+
 byte currentScreen = 0;
 
 void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
@@ -89,6 +94,18 @@ void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
       break;
     case 2:
       printPlayerFileScreen();
+      break;
+    case 3:
+      printCoilSetupScreen();
+      break;
+    case 4:
+      printCoilTestScreen();
+      break;
+    case 5:
+      printSelfTestScreen();
+      break;
+    case 6:
+      printCreditsScreen();
       break;
   }
 }
@@ -273,7 +290,7 @@ void onButtonClicked(uint8_t pin) {
         saveSettings(eeAddress, settings);
         currentScreen = 0;
       }
-      //Gerade "Player File gewählt?
+      //Gerade "Player File" gewählt?
       if (encpos == 1) {
         encpos = 0;
         //SD ohne Fehler gelesen
@@ -291,6 +308,25 @@ void onButtonClicked(uint8_t pin) {
           currentScreen = 0;
         }
       }
+      //Gerade "Coil Setup" gewählt?
+      if (encpos == 2) {
+        currentScreen = 3;
+      }
+      //Gerade "Coil Test/Manual Mode" gewählt?
+      if (encpos == 3) {
+        currentScreen = 4;
+      }
+      //Gerade "Self Test" gewählt?
+      if (encpos == 4) {
+        currentScreen = 5;
+      }
+      //Gerade "Credits" gewählt?
+      if (encpos == 5) {
+        currentScreen = 6;
+      }
+
+
+
     }
   }
   //Bei der Dateiauswahl die aktuelle Datei übernehmen
@@ -561,6 +597,57 @@ void printPlayerFileScreen(void) {
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
+void printCoilSetupScreen(void) {
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+void printCoilTestScreen(void) {
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+void printSelfTestScreen(void) {
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+void printCreditsScreen(void) {
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+  u8g2.drawStr(10, 10, "Controller for a Tesla Orchestra");
+  u8g2.drawStr(10, 20, "Developed at FHWS Schweinfurt in 2019 by");
+  u8g2.drawStr(10, 30, "Julius Witte");
+  u8g2.drawStr(10, 40, "Michael Loose");
+  u8g2.drawStr(10, 50, "Mark Philipp Richter");
+  u8g2.drawStr(10, 60, "Hussein Mahmoud");
+
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+
 
 void saveSettings(int loceeAddress, set locSettings) {
   EEPROM.put(loceeAddress , locSettings);
