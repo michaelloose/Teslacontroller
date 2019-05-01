@@ -7,7 +7,7 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 4/2019
-//Stand: 19/04/2019
+//Stand: 01/05/2019
 //////////////////////////////////////////////////////////////////////
 
 //SYNTAX AUSGABE: readMidi(byte0, byte1, byte2)
@@ -17,6 +17,7 @@
 String fileList[64];
 byte currentFile = 0;
 boolean playing = false;
+int counter = 0;
 
 const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
 const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
@@ -40,6 +41,11 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
   fileList[5] = "File 6";
   fileList[6] = "File 7";
   fileList[7] = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+
+  root = SD.open("/");        //root-Verzeichnis als Standard
+  
+  printDirectory(root, 0);
 
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
@@ -66,7 +72,31 @@ void pollMediaPlayer(void){
   }
 }
 
+void printDirectory(File dir, int numTabs) {    //Dateinamen ins Array schreiben
 
+  while (true) {
+
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      Serial.print('\t');
+    }
+    if (!entry.isDirectory()){
+    
+    Serial.print(entry.name());
+    fileList[counter]=entry.name();
+//      Serial.print("\t\t");
+//      Serial.println(entry.size(), DEC);
+    Serial.print('\n');
+    counter++;
+    }
+    entry.close();
+    
+    }
+  }
 
 
 
