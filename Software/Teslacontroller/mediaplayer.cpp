@@ -1,9 +1,9 @@
 //Teslacontroller.ino
 //
-//Main File für den Teslacontroller
+//Mediaplayer für den Teslacontroller
 //
 //
-//Author: Mark Phillipp Richter
+//Author: Mark Philipp Richter
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 4/2019
@@ -19,12 +19,14 @@ byte currentFile = 0;
 boolean playing = false;
 int counter = 0;
 
-const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
-const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
-
+File root;
+const int mSDcard = 30; // Entsprechenden Pin einfügen (20-49)
+const int SDcard = 31; // Entsprechenden Pin einfügen   (20-49)
+                        // MISO 50; MOSI 51; SCK 52
 int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
   byte fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
   int SDslot = SDcard;
+  counter = 0;
   
   if (!SD.begin(SDslot)) {
      SDslot = mSDcard;
@@ -45,7 +47,7 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
 
   root = SD.open("/");        //root-Verzeichnis als Standard
   
-  printDirectory(root, 0);
+  printDirectory(root);
 
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
@@ -72,7 +74,7 @@ void pollMediaPlayer(void){
   }
 }
 
-void printDirectory(File dir, int numTabs) {    //Dateinamen ins Array schreiben
+void printDirectory(File dir) {    //Dateinamen ins Array schreiben
 
   while (true) {
 
@@ -81,12 +83,12 @@ void printDirectory(File dir, int numTabs) {    //Dateinamen ins Array schreiben
       // no more files
       break;
     }
-    for (uint8_t i = 0; i < numTabs; i++) {
-      Serial.print('\t');
-    }
+   
+//      Serial.print('\t');
+//    
     if (!entry.isDirectory()){
     
-    Serial.print(entry.name());
+//    Serial.print(entry.name());
     fileList[counter]=entry.name();
 //      Serial.print("\t\t");
 //      Serial.println(entry.size(), DEC);

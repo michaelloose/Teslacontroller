@@ -12,5 +12,6 @@ void setCurrentFile(byte);
 
 void pollMediaPlayer(void);
 int initializeSD(void);
+void printDirectory(File dir);
 void playFile(void);
 void pauseFile(void);
