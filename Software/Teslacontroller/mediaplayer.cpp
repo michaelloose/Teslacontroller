@@ -14,11 +14,14 @@
 
 #include "mediaplayer.hpp"
 
+
 String fileList[64];
 byte currentFile = 0;
 boolean playing = false;
 int counter = 0;
 
+SdFat SD;
+MD_MIDIFile SMF;
 File root;
 const int mSDcard = 30; // Entsprechenden Pin einfügen (20-49)
 const int SDcard = 31; // Entsprechenden Pin einfügen   (20-49)
