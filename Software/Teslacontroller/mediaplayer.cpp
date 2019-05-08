@@ -35,7 +35,7 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
     fehlercode = 1;
   }
 
-  fileList[0] = "File 1";
+  fileList[0] = "NO DATA";
   fileList[1] = "File 2";
   fileList[2] = "File 3";
   fileList[3] = "File 4";
@@ -49,6 +49,15 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
   
   printDirectory(root);
 
+  Serial.println("Ab jetzt fileList[] \n");      // Kontrolle ob richtig eingelesen wurde
+  for (int i=0; i<counter; i++){
+    Serial.print(i+1);
+    Serial.print(". \t");
+    Serial.println(fileList[i]);
+  }
+  if (counter == 0){
+    Serial.println(fileList[counter]);
+  }
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
@@ -84,14 +93,13 @@ void printDirectory(File dir) {    //Dateinamen ins Array schreiben
       break;
     }
    
-//      Serial.print('\t');
-//    
+
     if (!entry.isDirectory()){
-    
-//    Serial.print(entry.name());
-    fileList[counter]=entry.name();
-//      Serial.print("\t\t");
-//      Serial.println(entry.size(), DEC);
+
+    fileList[counter] = fileNameAsString(entry);
+    Serial.print(fileList[counter]);
+   
+     
     Serial.print('\n');
     counter++;
     }
@@ -100,6 +108,19 @@ void printDirectory(File dir) {    //Dateinamen ins Array schreiben
     }
   }
 
+String fileNameAsString(File activeFile) {         // Dateinamen als String
+  char filename[20];
+  String fn = "";
+
+  activeFile.getName(filename, 50);
+
+  for (int i = 0; i < strlen(filename); i++)
+  {
+    fn = fn + filename[i];
+  }
+
+  return fn;
+}
 
 
 
