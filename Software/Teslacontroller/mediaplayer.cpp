@@ -7,7 +7,7 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 4/2019
-//Stand: 01/05/2019
+//Stand: 08/05/2019
 //////////////////////////////////////////////////////////////////////
 
 //SYNTAX AUSGABE: readMidi(byte0, byte1, byte2)
@@ -23,8 +23,8 @@ int counter = 0;
 SdFat SD;
 MD_MIDIFile SMF;
 File root;
-const int mSDcard = 30; // Entsprechenden Pin einfügen (20-49)
-const int SDcard = 31; // Entsprechenden Pin einfügen   (20-49)
+const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
+const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
                         // MISO 50; MOSI 51; SCK 52
 int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
   byte fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
@@ -123,6 +123,71 @@ String fileNameAsString(File activeFile) {         // Dateinamen als String
   }
 
   return fn;
+}
+// Ab hier MIDI Funktionen
+
+void midiCallback(midi_event *pev)
+// Called by the MIDIFile library when a file event needs to be processed
+// thru the midi communications interface.
+// This callback is set up in the setup() function.
+{
+#if USE_MIDI
+  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
+  {
+    Serial.write(pev->data[0] | pev->channel);
+    Serial.write(&pev->data[1], pev->size-1);
+  }
+  else
+    Serial.write(pev->data, pev->size);
+#endif
+  Serial.print("\n");
+  Serial.print(millis());
+  Serial.print("\tM T");
+  Serial.print(pev->track);
+  Serial.print(":  Ch ");
+  Serial.print(pev->channel+1);
+  Serial.print(" Data ");
+  for (uint8_t i=0; i<pev->size; i++)
+  {
+  Serial.print(pev->data[i], HEX);
+    Serial.print(' ');
+  }
+}
+
+
+void sysexCallback(sysex_event *pev)
+// Called by the MIDIFile library when a system Exclusive (sysex) file event needs 
+// to be processed through the midi communications interface. Most sysex events cannot 
+// really be processed, so we just ignore it here.
+// This callback is set up in the setup() function.
+{
+  Serial.print("\nS T");
+  Serial.print(pev->track);
+  Serial.print(": Data ");
+  for (uint8_t i=0; i<pev->size; i++)
+  {
+    Serial.print(pev->data[i], HEX);
+    Serial.print(' ');
+  }
+}
+
+void midiSilence(void)
+// Turn everything off on every channel.
+// Some midi files are badly behaved and leave notes hanging, so between songs turn
+// off all the notes and sound
+{
+  midi_event ev;
+
+  // All sound off
+  // When All Sound Off is received all oscillators will turn off, and their volume
+  // envelopes are set to zero as soon as possible.
+  ev.size = 0;
+  ev.data[ev.size++] = 0xb0;
+  ev.data[ev.size++] = 120;
+  ev.data[ev.size++] = 0;
+
+  for (ev.channel = 0; ev.channel < 16; ev.channel++)
+    midiCallback(&ev);
 }
 
 

@@ -15,5 +15,9 @@ void pollMediaPlayer(void);
 int initializeSD(void);
 void printDirectory(File dir);
 String fileNameAsString(File activeFile);
+
+void midiCallback(midi_event *pev);
+void sysexCallback(sysex_event *pev);
+void midiSilence(void);
 void playFile(void);
 void pauseFile(void);
