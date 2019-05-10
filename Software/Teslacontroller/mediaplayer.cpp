@@ -7,15 +7,15 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 4/2019
-//Stand: 08/05/2019
+//Stand: 10/05/2019
 //////////////////////////////////////////////////////////////////////
 
 //SYNTAX AUSGABE: readMidi(byte0, byte1, byte2)
 
 #include "mediaplayer.hpp"
 
-
-String fileList[64];
+byte maxfiles= 100;
+String fileList[100];  // Muss maxfiles entsprechen
 byte currentFile = 0;
 boolean playing = false;
 int counter = 0;
@@ -25,48 +25,77 @@ MD_MIDIFile SMF;
 File root;
 const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
 const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
-                        // MISO 50; MOSI 51; SCK 52
+// MISO 50; MOSI 51; SCK 52
+
+#define USE_MIDI 1
+
+
 int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
   byte fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
   int SDslot = SDcard;
   counter = 0;
-  
+
   if (!SD.begin(SDslot)) {
-     SDslot = mSDcard;
+    SDslot = mSDcard;
+ 
+    if (!SD.begin(SDslot)) {
+      fehlercode = 1;
+    }
   }
-  if (!SD.begin(SDslot)) {
-    fehlercode = 1;
-  }
+readData:
+
 
   fileList[0] = "NO DATA";
-  fileList[1] = "File 2";
-  fileList[2] = "File 3";
-  fileList[3] = "File 4";
-  fileList[4] = "File 5";
-  fileList[5] = "File 6";
-  fileList[6] = "File 7";
+  fileList[1] = "Demo 2";
+  fileList[2] = "Demo 3";
+  fileList[3] = "Demo 4";
+  fileList[4] = "Demo 5";
+  fileList[5] = "Demo 6";
+  fileList[6] = "Demo 7";
   fileList[7] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 
   root = SD.open("/");        //root-Verzeichnis als Standard
-  
-  printDirectory(root);
+
+  createfileList(root);
 
   Serial.println("Ab jetzt fileList[] \n");      // Kontrolle ob richtig eingelesen wurde
-  for (int i=0; i<counter; i++){
-    Serial.print(i+1);
+  for (int i = 0; i < counter; i++) {
+    Serial.print(i + 1);
     Serial.print(". \t");
     Serial.println(fileList[i]);
   }
-  if (counter == 0){
+  if ((counter == 0)  && (SDslot == SDcard)) {    // MicroSD prüfen falls SD keine .mid enthält
     Serial.println(fileList[counter]);
+
+    SDslot = mSDcard;
+      
+      
+      if (!SD.begin(SDslot)) {                    //MIcroSD nicht vorhanden -> Fehler 2
+      fehlercode = 2;
+      }
+    
+    goto readData;
   }
+  
+  if ((counter == 0)  && (SDslot == mSDcard)) {     // Wenn (auch) nix auf der MicroSD ist: Fehler 2
+    Serial.println(fileList[counter]);
+ 
+      fehlercode = 2;
+      
+  }
+  // Initialize MIDIFile
+  SMF.begin(&SD);
+  SMF.setMidiHandler(midiCallback);
+  SMF.setSysexHandler(sysexCallback);
+  //SMF.looping(true);
+
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
 }
 
-//Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit 
+//Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit
 void playFile(void) {
   playing = true;
 
@@ -77,39 +106,85 @@ void pauseFile(void) {
 
 }
 
-void pollMediaPlayer(void){
+void pollMediaPlayer(void) {
   //Wenn das playing Bit gesetzt ist läuft diese Schleife mit der Main Loop mit
-  if(playing){
+  if (playing) {
 
-  //Hierein gehört der ganze Code zum Abspielen!
+    //Hierein gehört der ganze Code zum Abspielen!
+
+    int  err;
+
+    for (currentFile;  currentFile < counter + 1; currentFile++)
+    {
+
+      // use the next file name and play it
+      Serial.print("\nFile: ");
+      Serial.print(fileList[currentFile]);
+      SMF.setFilename(fileList[currentFile].c_str());
+      err = SMF.load();
+      if (err != -1)
+      {
+        Serial.print("\nSMF load Error ");
+        Serial.print(err);
+
+        delay(2000);
+      }
+      else
+      {
+        // play the file
+        while (!SMF.isEOF())
+        {                                           /// Hier muss eventuell die Pause hin
+          if (SMF.getNextEvent())
+            ;
+
+        }
+
+        // done with this one
+        SMF.close();
+        midiSilence();
+
+      }
     
-  }
-}
+      if (currentFile == counter) {
+        currentFile=0;
+      }
+     }
+    
+    
+    }
 
-void printDirectory(File dir) {    //Dateinamen ins Array schreiben
 
-  while (true) {
+ }
+
+
+void createfileList(File dir) {    //Dateinamen ins Array schreiben
+
+  for (int j=0; j<maxfiles; j++) {
 
     File entry =  dir.openNextFile();
+
     if (! entry) {
       // no more files
       break;
     }
-   
 
-    if (!entry.isDirectory()){
+    if (!entry.isDirectory()) {
 
-    fileList[counter] = fileNameAsString(entry);
-    Serial.print(fileList[counter]);
-   
-     
-    Serial.print('\n');
-    counter++;
+      if ( isMidi(fileNameAsString(entry).c_str()) ) {
+
+        fileList[counter] = fileNameAsString(entry);
+        Serial.print(fileList[counter]);
+
+        Serial.print('\n');
+        counter++;
+
+      }
+
     }
     entry.close();
     
-    }
   }
+}
 
 String fileNameAsString(File activeFile) {         // Dateinamen als String
   char filename[20];
@@ -124,6 +199,22 @@ String fileNameAsString(File activeFile) {         // Dateinamen als String
 
   return fn;
 }
+
+
+
+bool isMidi(char* filename) {
+  int8_t len = strlen(filename);
+  bool result;
+  if (  strstr(strlwr(filename + (len - 4)), ".MID")
+        || strstr(strlwr(filename + (len - 4)), ".mid")
+        // and anything else you want
+     ) {
+    result = true;
+  } else {
+    result = false;
+  }
+  return result;
+}
 // Ab hier MIDI Funktionen
 
 void midiCallback(midi_event *pev)
@@ -135,7 +226,7 @@ void midiCallback(midi_event *pev)
   if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
   {
     Serial.write(pev->data[0] | pev->channel);
-    Serial.write(&pev->data[1], pev->size-1);
+    Serial.write(&pev->data[1], pev->size - 1);
   }
   else
     Serial.write(pev->data, pev->size);
@@ -145,26 +236,26 @@ void midiCallback(midi_event *pev)
   Serial.print("\tM T");
   Serial.print(pev->track);
   Serial.print(":  Ch ");
-  Serial.print(pev->channel+1);
+  Serial.print(pev->channel + 1);
   Serial.print(" Data ");
-  for (uint8_t i=0; i<pev->size; i++)
+  for (uint8_t i = 0; i < pev->size; i++)
   {
-  Serial.print(pev->data[i], HEX);
+    Serial.print(pev->data[i], HEX);
     Serial.print(' ');
   }
 }
 
 
 void sysexCallback(sysex_event *pev)
-// Called by the MIDIFile library when a system Exclusive (sysex) file event needs 
-// to be processed through the midi communications interface. Most sysex events cannot 
+// Called by the MIDIFile library when a system Exclusive (sysex) file event needs
+// to be processed through the midi communications interface. Most sysex events cannot
 // really be processed, so we just ignore it here.
 // This callback is set up in the setup() function.
 {
   Serial.print("\nS T");
   Serial.print(pev->track);
   Serial.print(": Data ");
-  for (uint8_t i=0; i<pev->size; i++)
+  for (uint8_t i = 0; i < pev->size; i++)
   {
     Serial.print(pev->data[i], HEX);
     Serial.print(' ');
