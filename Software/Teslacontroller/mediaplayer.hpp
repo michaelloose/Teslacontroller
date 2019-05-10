@@ -13,8 +13,9 @@ void setCurrentFile(byte);
 
 void pollMediaPlayer(void);
 int initializeSD(void);
-void printDirectory(File dir);
+void createfileList(File dir);
 String fileNameAsString(File activeFile);
+bool isMidi(char* filename);
 
 void midiCallback(midi_event *pev);
 void sysexCallback(sysex_event *pev);
