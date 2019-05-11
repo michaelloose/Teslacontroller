@@ -222,15 +222,15 @@ void midiCallback(midi_event *pev)
 // thru the midi communications interface.
 // This callback is set up in the setup() function.
 {
-#if USE_MIDI
-  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
-  {
-    Serial.write(pev->data[0] | pev->channel);
-    Serial.write(&pev->data[1], pev->size - 1);
-  }
-  else
-    Serial.write(pev->data, pev->size);
-#endif
+//#if USE_MIDI
+//  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
+//  {
+//    Serial.write(pev->data[0] | pev->channel);
+//    Serial.write(&pev->data[1], pev->size - 1);
+//  }
+//  else
+//    Serial.write(pev->data, pev->size);
+//#endif
   Serial.print("\n");
   Serial.print(millis());
   Serial.print("\tM T");
@@ -243,6 +243,7 @@ void midiCallback(midi_event *pev)
     Serial.print(pev->data[i], HEX);
     Serial.print(' ');
   }
+  readMidi(pev->data[0] | pev->channel, pev->data[1], pev->data[2]);
 }
 
 
