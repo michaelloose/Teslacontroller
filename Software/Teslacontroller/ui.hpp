@@ -1,13 +1,12 @@
-#include <Arduino.h>
 #include <U8g2lib.h>
 #include <EEPROM.h>
 #include <SPI.h>
-#include <Wire.h>
+
 
 #include "mediaplayer.hpp"
 #include "logo.cpp"
 
-#define pcf8575adress 0x20
+
 #define eeAddress 0 //Startadresse für das Auslesen vom EEPROM
 //Datentyp für Einstellungen
 struct set {
@@ -16,8 +15,8 @@ struct set {
 };
 set getSettings(void);
 //Methoden zum Einlesen der Knöpfe
+
 void pollUserInput(void);
-void initialiseButtons(void);
 bool getButtonPressed(void);
 byte getCurrentScreen(void);
 
@@ -25,7 +24,7 @@ void onButtonClicked(uint8_t);
 void onEncoderChange(bool);
 
 //Methoden zur Ausgabe auf dem Display
-void refreshScreen(byte, bool[3]);
+void refreshScreen(void);
 void initialiseDisplay(void);
 void printStartScreen(void);
 

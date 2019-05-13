@@ -14,7 +14,7 @@
 
 #include "mediaplayer.hpp"
 
-byte maxfiles= 100;
+byte maxfiles = 100;
 String fileList[100];  // Muss maxfiles entsprechen
 byte currentFile = 0;
 boolean playing = false;
@@ -24,20 +24,24 @@ SdFat SD;
 MD_MIDIFile SMF;
 File root;
 const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
-const int SDcard = 41; // Entsprechenden Pin einfügen   (20-49)
+const int SDcard = 53; // Entsprechenden Pin einfügen   (20-49)
 // MISO 50; MOSI 51; SCK 52
 
 #define USE_MIDI 1
 
+int getNumberOfLoadedFiles(void){
+  return counter;
+}
+
 
 int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
-  byte fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
+  int fehlercode = -1; // -1: kein Fehler; 1: keine SDkarte; 2: Keine Dateien
   int SDslot = SDcard;
   counter = 0;
 
   if (!SD.begin(SDslot)) {
     SDslot = mSDcard;
- 
+
     if (!SD.begin(SDslot)) {
       fehlercode = 1;
     }
@@ -69,20 +73,20 @@ readData:
     Serial.println(fileList[counter]);
 
     SDslot = mSDcard;
-      
-      
-      if (!SD.begin(SDslot)) {                    //MIcroSD nicht vorhanden -> Fehler 2
+
+
+    if (!SD.begin(SDslot)) {                    //MIcroSD nicht vorhanden -> Fehler 2
       fehlercode = 2;
-      }
-    
+    }
+
     goto readData;
   }
-  
+
   if ((counter == 0)  && (SDslot == mSDcard)) {     // Wenn (auch) nix auf der MicroSD ist: Fehler 2
     Serial.println(fileList[counter]);
- 
-      fehlercode = 2;
-      
+
+    fehlercode = 2;
+
   }
   // Initialize MIDIFile
   SMF.begin(&SD);
@@ -90,6 +94,7 @@ readData:
   SMF.setSysexHandler(sysexCallback);
   //SMF.looping(true);
 
+  SPI.end();
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
@@ -98,11 +103,12 @@ readData:
 //Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit
 void playFile(void) {
   playing = true;
-
+  SMF.pause(false);
 }
 
 void pauseFile(void) {
   playing = false;
+  SMF.pause(true);
 
 }
 
@@ -114,52 +120,62 @@ void pollMediaPlayer(void) {
 
     int  err;
 
-    for (currentFile;  currentFile < counter + 1; currentFile++)
+
+
+    // use the next file name and play it
+    Serial.print("\nFile: ");
+    Serial.print(fileList[currentFile]);
+    SMF.setFilename(fileList[currentFile].c_str());
+    err = SMF.load();
+    if (err != -1)
     {
+      Serial.print("\nSMF load Error ");
+      Serial.print(err);
 
-      // use the next file name and play it
-      Serial.print("\nFile: ");
-      Serial.print(fileList[currentFile]);
-      SMF.setFilename(fileList[currentFile].c_str());
-      err = SMF.load();
-      if (err != -1)
-      {
-        Serial.print("\nSMF load Error ");
-        Serial.print(err);
-
-        delay(2000);
-      }
-      else
-      {
-        // play the file
-        while (!SMF.isEOF())
-        {                                           /// Hier muss eventuell die Pause hin
-          if (SMF.getNextEvent())
-            ;
-
+      delay(2000);
+    }
+    else
+    {
+      // play the file
+      while (!SMF.isEOF())
+      { /// Hier muss eventuell die Pause hin
+        
+        if (getUserInput()) {
+          pauseFile();
+          resetUserInput();
+          Serial.println("Deppenzugriff");
+          break;
         }
+        //Wurde ein Interrupt durch eine Taste ausgelöst sollen unverzüglich alle Tasten abgefragt werden.
 
-        // done with this one
-        SMF.close();
-        midiSilence();
+        if (SMF.getNextEvent())
+          ;
 
       }
-    
-      if (currentFile == counter) {
-        currentFile=0;
-      }
-     }
-    
-    
+
+      // done with this one
+      SMF.close();
+      midiSilence();
+
     }
 
+    if (currentFile == counter) {
+      currentFile = 0;
+    }
+  }
+  if (false) {  // Autoplay?
+    currentFile++;
+  }
 
- }
+  SPI.end();
+
+
+}
 
 
 void createfileList(File dir) {    //Dateinamen ins Array schreiben
 
-  for (int j=0; j<maxfiles; j++) {
+  for (int j = 0; j < maxfiles; j++) {
 
     File entry =  dir.openNextFile();
 
@@ -173,16 +189,14 @@ void createfileList(File dir) {    //Dateinamen ins Array schreiben
       if ( isMidi(fileNameAsString(entry).c_str()) ) {
 
         fileList[counter] = fileNameAsString(entry);
-        Serial.print(fileList[counter]);
-
-        Serial.print('\n');
+        
         counter++;
 
       }
 
     }
     entry.close();
-    
+
   }
 }
 
@@ -222,18 +236,17 @@ void midiCallback(midi_event *pev)
 // thru the midi communications interface.
 // This callback is set up in the setup() function.
 {
-//#if USE_MIDI
-//  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
-//  {
-//    Serial.write(pev->data[0] | pev->channel);
-//    Serial.write(&pev->data[1], pev->size - 1);
-//  }
-//  else
-//    Serial.write(pev->data, pev->size);
-//#endif
+  //#if USE_MIDI
+  //  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
+  //  {
+  //    Serial.write(pev->data[0] | pev->channel);
+  //    Serial.write(&pev->data[1], pev->size - 1);
+  //  }
+  //  else
+  //    Serial.write(pev->data, pev->size);
+  //#endif
   Serial.print("\n");
-  Serial.print(millis());
-  Serial.print("\tM T");
+  Serial.print(" T");
   Serial.print(pev->track);
   Serial.print(":  Ch ");
   Serial.print(pev->channel + 1);
@@ -293,6 +306,9 @@ byte getCurrentFile(void) {
 }
 void setCurrentFile(byte i) {
   currentFile = i;
+  Serial.print("\n");
+  Serial.println(fileList[currentFile]);
+  Serial.println(currentFile);
 }
 bool getPlayingState(void) {
   return playing;

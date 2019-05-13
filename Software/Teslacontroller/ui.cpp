@@ -29,20 +29,11 @@ byte encmax = 5;
 byte scrollpos = 0;
 //Aktuell ausgewähltes Feld
 byte cursorPosition = 0;
-//Anzahl der geladenen Dateien
-byte numberOfLoadedFiles = 0;
 
 
-//Interrupt Service Routine für Benutzereingabe
-volatile bool userInput = false;
-void pcf8575ISR() {
-  userInput = true;
-}
+
 //Wird ständig gepolled. Prüft ob das Bit für die Benutzereingabe gesetzt wurde.
 void pollUserInput() {
-
-  if (userInput) {
-    userInput = false;
 
     //Auslesen der Daten über i2c
     Wire.requestFrom(pcf8575adress, 1);
@@ -70,7 +61,7 @@ void pollUserInput() {
     if (incomingByte == 0b00100011) onButtonClicked(3);
     if (incomingByte == 0b01000011) onButtonClicked(4);
     if (incomingByte == 0b10000011) onButtonClicked(5);
-  }
+  
 }
 
 //Aktuell angezeigtes Bild
@@ -84,10 +75,10 @@ void pollUserInput() {
 
 byte currentScreen = 0;
 
-void refreshScreen(byte locCurrentScreen, bool locInputState[3]) {
-  switch (locCurrentScreen) {
+void refreshScreen(void) {
+  switch (currentScreen) {
     case 0:
-      printHomeScreen(locInputState);
+      printHomeScreen(inputState);
       break;
     case 1:
       printMenuScreen();
@@ -123,11 +114,11 @@ void onEncoderChange(bool direction) {
     //Drehung im Uhrzeigersinn
     if (direction) {
       //Oberhalb des unteren Displayendes
-      if (encpos < encmax && encpos < (numberOfLoadedFiles - 1)) encpos++;
+      if (encpos < encmax && encpos < (getNumberOfLoadedFiles() - 1)) encpos++;
       //In der letzten Zeile
       else {
         //Ist die Liste noch nicht zu Ende weiterscrollen
-        if (numberOfLoadedFiles > (scrollpos + encpos + 1)) scrollpos++;
+        if (getNumberOfLoadedFiles() > (scrollpos + encpos + 1)) scrollpos++;
         //Ist die Liste zu Ende wieder von vorne anfangen
         else {
           encpos = 0;
@@ -145,13 +136,13 @@ void onEncoderChange(bool direction) {
         //Ist die Liste zu Ende wieder von vorne anfangen
         else {
           //Sind weniger gleich 6 Elemente in der Liste?
-          if (numberOfLoadedFiles <= 6) {
+          if (getNumberOfLoadedFiles() <= 6) {
             scrollpos = 0;
-            encpos = numberOfLoadedFiles - 1 ;
+            encpos = getNumberOfLoadedFiles() - 1 ;
           }
           //Sind mehr  als 6 Elemente in der Liste?
           else {
-            scrollpos = numberOfLoadedFiles - 6;
+            scrollpos = getNumberOfLoadedFiles() - 6;
             encpos = encmax;
           }
         }
@@ -200,7 +191,7 @@ void onEncoderChange(bool direction) {
     }
 
   }
-  refreshScreen(currentScreen, inputState);
+  refreshScreen();
 }
 //Wird bei erkanntem Tastendruck aufgerufen
 void onButtonClicked(uint8_t pin) {
@@ -295,10 +286,6 @@ void onButtonClicked(uint8_t pin) {
         encpos = 0;
         //SD ohne Fehler gelesen
         if (initializeSD() == -1) {
-          //Anzahl der geladenen Dateien ermitteln
-          while (getFileList(numberOfLoadedFiles) != 0) {
-            numberOfLoadedFiles++;
-          }
           printPlayerFileScreen();
           currentScreen = 2;
         }
@@ -330,12 +317,12 @@ void onButtonClicked(uint8_t pin) {
     }
   }
   //Bei der Dateiauswahl die aktuelle Datei übernehmen
-  if (currentScreen == 2 && pin == 6 && numberOfLoadedFiles > 0) {
+  if (currentScreen == 2 && pin == 6 && getNumberOfLoadedFiles() > 0) {
     setCurrentFile(scrollpos + encpos);
     //currentScreen = 0;
   }
 
-  refreshScreen(currentScreen, inputState);
+  refreshScreen();
 }
 void loadSettings() {
   //Einstellungen aus dem EEprom laden
@@ -362,16 +349,7 @@ void loadSettings() {
   }
 
 }
-//Initialisierung der Eingabeknöpfe
-void initialiseButtons(void) {
-  Wire.begin();
-  pinMode(2, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(2), pcf8575ISR, FALLING);
-  Wire.requestFrom(pcf8575adress, 1);
-  Serial.println("PCF8575 erfolgreich initialisiert!");
-  //Nach erfolgreichem Initialisieren soll das aktuelle Bild angezeigt werden
-  refreshScreen(currentScreen, inputState);
-}
+
 
 //Definition des Displayanschlusses
 U8G2_SSD1322_NHD_256X64_F_4W_SW_SPI u8g2(U8G2_R2, /* clock=*/ 52, /* data=*/ 51, /* cs=*/ 49, /* dc=*/ 48, /* reset=*/ 47);
@@ -380,9 +358,9 @@ U8G2_SSD1322_NHD_256X64_F_4W_SW_SPI u8g2(U8G2_R2, /* clock=*/ 52, /* data=*/ 51,
 
 //Display Initialisierung
 void initialiseDisplay(void) {
-  // u8g2.setBusClock(8000000UL);
+  
   u8g2.begin();
-  u8g2.setBusClock(1);
+  
   u8g2.setFont(u8g2_font_6x10_tf);
   //Hintergrund transparent
   u8g2.setFontMode(1);
@@ -581,7 +559,7 @@ void printPlayerFileScreen(void) {
   u8g2.setCursor(227, 10);
   u8g2.print(scrollpos + encpos + 1);
   u8g2.print("/");
-  u8g2.print(numberOfLoadedFiles);
+  u8g2.print(getNumberOfLoadedFiles());
 
   //Ausgabe der aktuell anzuzeigenden Dateien auf dem Display
   for (int i = 0; i < 6; i++)

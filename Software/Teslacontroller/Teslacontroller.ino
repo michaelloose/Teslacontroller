@@ -15,17 +15,23 @@
 //Gettermethoden bekommen die Vorsilbe get, Settermethoden set
 //lokale Variablen, welche sich von globalen ableiten bekommen die vorsilbe loc
 
+#include<SPI.h>
 //Die eigenen Headerfiles
 #include "ui.hpp"
+#include "pcf8574.hpp"
 #include "mediaplayer.hpp"
 
 
+
+
 void setup(void) {
+
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   //Display initialisieren und Startbild anzeigen
   initialiseDisplay();
   printStartScreen();
   //Etwas warten damit man den schönen Startbildschirm bewundern kann :)
-  delay(3000);
+  //delay(3000);
 
   // Initialisierung der seriellen Schnittstellen
   Serial.begin(9600); //Debugging Schnittstelle
@@ -39,9 +45,13 @@ void setup(void) {
 }
 
 void loop(void) {
-  //taskManager.runLoop();
-  pollUserInput();
+  if (getUserInput()) {
+    resetUserInput();
+    pollUserInput();
+
+  }
   pollMediaPlayer();
+  
 
 
 }

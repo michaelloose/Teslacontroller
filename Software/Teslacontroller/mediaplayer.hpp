@@ -5,11 +5,15 @@
 #include <SdFat.h>
 #include <MD_MIDIFile.h>
 
+#include"pcf8574.hpp"
+
 //Getter/Settermethoden
 String getFileList(byte);
 byte getCurrentFile(void);
 bool getPlayingState(void);
 void setCurrentFile(byte);
+
+int getNumberOfLoadedFiles(void);
 
 void pollMediaPlayer(void);
 int initializeSD(void);
