@@ -20,6 +20,7 @@
 #include "ui.hpp"
 #include "pcf8574.hpp"
 #include "mediaplayer.hpp"
+#include "MIDI_Recieve.hpp"
 
 
 
@@ -35,12 +36,13 @@ void setup(void) {
 
   // Initialisierung der seriellen Schnittstellen
   Serial.begin(9600); //Debugging Schnittstelle
-  Serial1.begin(31250); //MIDI Schnittstelle
+  Serial3.begin(31250); //MIDI Schnittstelle
 
   loadSettings();
   // PCF8575 für Benutzereingaben initialisieren
 
   initialiseButtons();
+  refreshScreen();
 
 }
 
@@ -48,10 +50,10 @@ void loop(void) {
   if (getUserInput()) {
     resetUserInput();
     pollUserInput();
-
   }
   pollMediaPlayer();
-  
+  pollMidiIn();
+
 
 
 }
