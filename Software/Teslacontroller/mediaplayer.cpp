@@ -103,14 +103,60 @@ readData:
 //Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit
 void playFile(void) {
   playing = true;
-  SMF.pause(false);
+  //SMF.pause(false);
 }
 
 void pauseFile(void) {
   playing = false;
-  SMF.pause(true);
+  //SMF.pause(true);
 
 }
+
+void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
+
+
+  if(!playing){
+    int  err;
+
+    Serial.print("\nFile: ");
+    Serial.print(fileList[currentFile]);
+    SMF.setFilename(fileList[currentFile].c_str());
+    err = SMF.load();
+    if (err != -1)
+    {
+      Serial.print("\nSMF load Error ");
+      Serial.print(err);
+
+      //delay(2000);
+    }
+    
+  }
+  
+}
+
+void playMidiFile(void){            // Midi Datei abspielen
+  if(!getUserInput()){
+  if(playing){
+
+
+  if (!SMF.isEOF())
+      { 
+        
+        if (SMF.getNextEvent())
+          ;
+
+      }
+   else{
+    SMF.close();
+    midiSilence();
+   }
+
+  }
+  }
+  SPI.end();
+}
+
+
 
 void pollMediaPlayer(void) {
   //Wenn das playing Bit gesetzt ist läuft diese Schleife mit der Main Loop mit
@@ -159,9 +205,9 @@ void pollMediaPlayer(void) {
 
     }
 
-    if (currentFile == counter) {
-      currentFile = 0;
-    }
+//    if (currentFile == counter) {
+//      currentFile = 0;
+//    }
   }
   if (false) {  // Autoplay?
     currentFile++;

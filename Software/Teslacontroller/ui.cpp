@@ -319,6 +319,7 @@ void onButtonClicked(uint8_t pin) {
   //Bei der Dateiauswahl die aktuelle Datei übernehmen
   if (currentScreen == 2 && pin == 6 && getNumberOfLoadedFiles() > 0) {
     setCurrentFile(scrollpos + encpos);
+   
     //currentScreen = 0;
   }
 

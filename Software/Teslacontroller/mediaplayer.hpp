@@ -15,6 +15,8 @@ void setCurrentFile(byte);
 
 int getNumberOfLoadedFiles(void);
 
+void loadMidiFile(void);
+void playMidiFile(void);
 void pollMediaPlayer(void);
 int initializeSD(void);
 void createfileList(File dir);
