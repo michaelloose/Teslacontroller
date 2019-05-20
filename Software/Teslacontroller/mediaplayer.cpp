@@ -19,6 +19,7 @@ String fileList[100];  // Muss maxfiles entsprechen
 byte currentFile = 0;
 boolean playing = false;
 int counter = 0;
+boolean fileSelected = 0;
 
 SdFat SD;
 MD_MIDIFile SMF;
@@ -108,6 +109,7 @@ void playFile(void) {
 
 void pauseFile(void) {
   playing = false;
+  midiSilence();
   //SMF.pause(true);
 
 }
@@ -115,13 +117,16 @@ void pauseFile(void) {
 void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
 
 
-  if(!playing){
+  if((playing == true) && (fileSelected ==1)){
+    fileSelected = 0;
+    
     int  err;
 
     Serial.print("\nFile: ");
     Serial.print(fileList[currentFile]);
     SMF.setFilename(fileList[currentFile].c_str());
     err = SMF.load();
+    
     if (err != -1)
     {
       Serial.print("\nSMF load Error ");
@@ -129,13 +134,17 @@ void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
 
       //delay(2000);
     }
+    else{
+      Serial.println(playing);
+      
+    }
+    }
     
   }
   
-}
 
-void playMidiFile(void){            // Midi Datei abspielen
-  if(!getUserInput()){
+bool playMidiFile(void){            // Midi Datei abspielen
+  if(!getUserInput()){              
   if(playing){
 
 
@@ -149,74 +158,25 @@ void playMidiFile(void){            // Midi Datei abspielen
    else{
     SMF.close();
     midiSilence();
-   }
-
-  }
-  }
-  SPI.end();
-}
-
-
-
-void pollMediaPlayer(void) {
-  //Wenn das playing Bit gesetzt ist läuft diese Schleife mit der Main Loop mit
-  if (playing) {
-
-    //Hierein gehört der ganze Code zum Abspielen!
-
-    int  err;
-
-
-
-    // use the next file name and play it
-    Serial.print("\nFile: ");
-    Serial.print(fileList[currentFile]);
-    SMF.setFilename(fileList[currentFile].c_str());
-    err = SMF.load();
-    if (err != -1)
-    {
-      Serial.print("\nSMF load Error ");
-      Serial.print(err);
-
-      delay(2000);
-    }
-    else
-    {
-      // play the file
-      while (!SMF.isEOF())
-      { /// Hier muss eventuell die Pause hin
-        
-        if (getUserInput()) {
-          pauseFile();
-          resetUserInput();
-          Serial.println("Deppenzugriff");
-          break;
-        }
-        //Wurde ein Interrupt durch eine Taste ausgelöst sollen unverzüglich alle Tasten abgefragt werden.
-
-        if (SMF.getNextEvent())
-          ;
-
-      }
-
-      // done with this one
-      SMF.close();
-      midiSilence();
-
-    }
-
-//    if (currentFile == counter) {
-//      currentFile = 0;
-//    }
-  }
-  if (false) {  // Autoplay?
+    playing = false;
+    
     currentFile++;
-  }
-
-  SPI.end();
-
-
+    fileSelected = 1;
+    
+    SPI.end();
+    return 1;               //Rückgabe zur Bildschirmaktualisierung beim Ende der Datei
+   }
+   
+   SPI.end();
+   return 0;
+    }
+   }
+  return 0;
+  
+  
 }
+
+
 
 
 void createfileList(File dir) {    //Dateinamen ins Array schreiben
@@ -358,4 +318,8 @@ void setCurrentFile(byte i) {
 }
 bool getPlayingState(void) {
   return playing;
+}
+
+void setFileSelected(void){
+  fileSelected = 1;
 }

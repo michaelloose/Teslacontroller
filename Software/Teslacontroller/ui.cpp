@@ -15,11 +15,6 @@ bool inputState[3] = {0, 0, 0}; //Die Anzeigen ob ein Eingang aktiv ist. Die sol
 
 #include "ui.hpp"
 
-set settings; //Variable zum Speichern der Einstellungen erstellen
-
-set getSettings(void) {
-  return settings;
-}
 
 //Speichern die aktuelle encoder Drehrichtung
 bool encplus = true;
@@ -35,33 +30,33 @@ byte cursorPosition = 0;
 //Wird ständig gepolled. Prüft ob das Bit für die Benutzereingabe gesetzt wurde.
 void pollUserInput() {
 
-    //Auslesen der Daten über i2c
-    Wire.requestFrom(pcf8575adress, 1);
-    byte incomingByte = Wire.read();
+  //Auslesen der Daten über i2c
+  Wire.requestFrom(pcf8575adress, 1);
+  byte incomingByte = Wire.read();
 
-    //Encoder in Ruhestellung?
-    if (incomingByte == 0b00000011) {
-      encplus = true;
-      encminus = true;
-    }
-    //Encoder im Uhrzeigersinn?
-    if ((incomingByte == 0b00000001) && encminus) {
-      encplus = false;
-      onEncoderChange(true);
-    }
-    //Encoder im Gegenuhrzeigersinn?
-    if ((incomingByte == 0b00000010) && encplus ) {
-      encminus = false;
-      onEncoderChange(false);
-    }
-    //Taste gedrückt?
-    if (incomingByte == 0b00000111) onButtonClicked(6);
-    if (incomingByte == 0b00001011) onButtonClicked(1);
-    if (incomingByte == 0b00010011) onButtonClicked(2);
-    if (incomingByte == 0b00100011) onButtonClicked(3);
-    if (incomingByte == 0b01000011) onButtonClicked(4);
-    if (incomingByte == 0b10000011) onButtonClicked(5);
-  
+  //Encoder in Ruhestellung?
+  if (incomingByte == 0b00000011) {
+    encplus = true;
+    encminus = true;
+  }
+  //Encoder im Uhrzeigersinn?
+  if ((incomingByte == 0b00000001) && encminus) {
+    encplus = false;
+    onEncoderChange(true);
+  }
+  //Encoder im Gegenuhrzeigersinn?
+  if ((incomingByte == 0b00000010) && encplus ) {
+    encminus = false;
+    onEncoderChange(false);
+  }
+  //Taste gedrückt?
+  if (incomingByte == 0b00000111) onButtonClicked(6);
+  if (incomingByte == 0b00001011) onButtonClicked(1);
+  if (incomingByte == 0b00010011) onButtonClicked(2);
+  if (incomingByte == 0b00100011) onButtonClicked(3);
+  if (incomingByte == 0b01000011) onButtonClicked(4);
+  if (incomingByte == 0b10000011) onButtonClicked(5);
+
 }
 
 //Aktuell angezeigtes Bild
@@ -169,24 +164,24 @@ void onEncoderChange(bool direction) {
       //Die Operation nimmt den Zehner von cursorPosition-1, also die entsprechende Ausgangsnummer
 
       if (direction) {
-        if (settings.source[((cursorPosition / 10) % 10) - 1] < 11) settings.source[((cursorPosition / 10) % 10) - 1]++;
-        else settings.source[((cursorPosition / 10) % 10) - 1] = 0;
+        if (getSettings().source[((cursorPosition / 10) % 10) - 1] < 11) setSettings.source[((cursorPosition / 10) % 10) - 1]++;
+        else getSettings().source[((cursorPosition / 10) % 10) - 1] = 0;
       }
       else {
-        if (settings.source[((cursorPosition / 10) % 10) - 1] > 0) settings.source[((cursorPosition / 10) % 10) - 1]--;
-        else settings.source[((cursorPosition / 10) % 10) - 1] = 11;
+        if (getSettings().source[((cursorPosition / 10) % 10) - 1] > 0) setSettings.source[((cursorPosition / 10) % 10) - 1]--;
+        else setSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
       }
     }
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {
       if (direction) {
 
-        if (settings.coilType[((cursorPosition / 10) % 10) - 1] < 20) settings.coilType[((cursorPosition / 10) % 10) - 1]++;
-        else settings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
+        if (getSettings().coilType[((cursorPosition / 10) % 10) - 1] < 20) setSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
+        else setSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
       }
       else {
-        if (settings.coilType[((cursorPosition / 10) % 10) - 1] > 0) settings.coilType[((cursorPosition / 10) % 10) - 1]--;
-        else settings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
+        if (getSettings().coilType[((cursorPosition / 10) % 10) - 1] > 0) setSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
+        else setSettings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
       }
     }
 
@@ -278,7 +273,7 @@ void onButtonClicked(uint8_t pin) {
 
       //Gerade "SaveSettings" gewählt?
       if (encpos == 0) {
-        saveSettings(eeAddress, settings);
+        saveSettings();
         currentScreen = 0;
       }
       //Gerade "Player File" gewählt?
@@ -319,37 +314,13 @@ void onButtonClicked(uint8_t pin) {
   //Bei der Dateiauswahl die aktuelle Datei übernehmen
   if (currentScreen == 2 && pin == 6 && getNumberOfLoadedFiles() > 0) {
     setCurrentFile(scrollpos + encpos);
-   
+    setFileSelected(); //Setzt ein Bit was dem Mediaplayer zeigt dass eine neue Datei ausgewählt wurde.
     //currentScreen = 0;
   }
 
   refreshScreen();
 }
-void loadSettings() {
-  //Einstellungen aus dem EEprom laden
-  EEPROM.get( eeAddress, settings); //Laden der Einstellungen aus dem EEprom
 
-  //DEBUG CODE
-  //Serielle ausgabe der Einstellungen
-  Serial.println("Einstellungen erfolgreich geladen!");
-  Serial.print("Source: ");
-
-  for (int i = 0; i < 4; i++)
-  {
-    Serial.print( settings.source[i] );
-    Serial.print(" ");
-  }
-
-  Serial.println("");
-  Serial.print("CoilType: ");
-
-  for (int i = 0; i < 4; i++)
-  {
-    Serial.print( settings.coilType[i] );
-    Serial.print(" ");
-  }
-
-}
 
 
 //Definition des Displayanschlusses
@@ -359,9 +330,9 @@ U8G2_SSD1322_NHD_256X64_F_4W_SW_SPI u8g2(U8G2_R2, /* clock=*/ 52, /* data=*/ 51,
 
 //Display Initialisierung
 void initialiseDisplay(void) {
-  
+
   u8g2.begin();
-  
+
   u8g2.setFont(u8g2_font_6x10_tf);
   //Hintergrund transparent
   u8g2.setFontMode(1);
@@ -382,7 +353,6 @@ void printStartScreen(void) {
 
 //Grundbild anzeigen
 void printHomeScreen(bool locinputState[3]) {
-  set locsettings = settings;
   char out[5]; //Zwischenspeicher für Anzeigen auf dem Display
 
   int height = u8g2.getMaxCharHeight() + 3;
@@ -415,7 +385,7 @@ void printHomeScreen(bool locinputState[3]) {
   else u8g2.drawFrame(xcol1, yrow1, 29, height);
 
   u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "ct");
-  intToString(locsettings.coilType[0]).toCharArray(out, 5); //Siehe ein paar Zeilen weiter unten
+  intToString(getSettings().coilType[0]).toCharArray(out, 5); //Siehe ein paar Zeilen weiter unten
   u8g2.drawStr(width * 2 + 3 + xcol1, yrow1 + height - 3, out );
 
 
@@ -423,7 +393,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 11) u8g2.drawBox(xcol1, yrow2, 29, height);
   else u8g2.drawFrame(xcol1, yrow2, 29, height);
 
-  sourceToString(locsettings.source[0]).toCharArray(out, 5); //Vor der Übergabe an drawstr muss der von der Methode "sourceToString" übergebene String in ein Char Array konvertiert werden, die Methode keinen String schluckt. Rückgabe von Arrays ist in c nicht möglich.
+  sourceToString(getSettings().source[0]).toCharArray(out, 5); //Vor der Übergabe an drawstr muss der von der Methode "sourceToString" übergebene String in ein Char Array konvertiert werden, die Methode keinen String schluckt. Rückgabe von Arrays ist in c nicht möglich.
   u8g2.drawStr(3, yrow2 + height - 3, out);
 
   //out2
@@ -435,13 +405,13 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
   else u8g2.drawFrame(xcol2, yrow1, 29, height);
   u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "ct");
-  intToString(locsettings.coilType[1]).toCharArray(out, 5);
+  intToString(getSettings().coilType[1]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol2, yrow1 + height - 3, out);
 
   //Source Anzeige
   if (cursorPosition == 21) u8g2.drawBox(xcol2, yrow2, 29, height);
   else u8g2.drawFrame(xcol2, yrow2, 29, height);
-  sourceToString(locsettings.source[1]).toCharArray(out, 5);
+  sourceToString(getSettings().source[1]).toCharArray(out, 5);
   u8g2.drawStr(xcol2 + 3, yrow2 + height - 3, out);
 
   //out3
@@ -454,13 +424,13 @@ void printHomeScreen(bool locinputState[3]) {
   else u8g2.drawFrame(xcol3, yrow1, 29, height);
 
   u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "ct");
-  intToString(locsettings.coilType[2]).toCharArray(out, 5);
+  intToString(getSettings().coilType[2]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol3, yrow1 + height - 3, out);
 
   //Source Anzeige
   if (cursorPosition == 31) u8g2.drawBox(xcol3, yrow2, 29, height);
   else u8g2.drawFrame(xcol3, yrow2, 29, height);
-  sourceToString(locsettings.source[2]).toCharArray(out, 5);
+  sourceToString(getSettings().source[2]).toCharArray(out, 5);
   u8g2.drawStr(xcol3 + 3, yrow2 + height - 3, out);
 
   //out4
@@ -473,13 +443,13 @@ void printHomeScreen(bool locinputState[3]) {
   else u8g2.drawFrame(xcol4, yrow1, 29, height);
 
   u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "ct");
-  intToString(locsettings.coilType[3]).toCharArray(out, 5);
+  intToString(getSettings().coilType[3]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol4, yrow1 + height - 3, out);
 
   //Source Anzeige
   if (cursorPosition == 41) u8g2.drawBox(xcol4, yrow2, 29, height);
   else u8g2.drawFrame(xcol4, yrow2, 29, height);
-  sourceToString(locsettings.source[3]).toCharArray(out, 5);
+  sourceToString(getSettings().source[3]).toCharArray(out, 5);
   u8g2.drawStr(xcol4 + 3, yrow2 + height - 3, out);
 
   //menu
@@ -628,10 +598,7 @@ void printCreditsScreen(void) {
 }
 
 
-void saveSettings(int loceeAddress, set locSettings) {
-  EEPROM.put(loceeAddress , locSettings);
-  Serial.print("Saving Complete");
-}
+
 
 //wandelt die Nummer des Eingangstyps in einen lesbaren String um
 //Rückgabe eines Objektes vom Typ String ist relativ Speicherintensiv. Besser wäre es einen Puffer außerhalb der Methode zu erstellen und lediglich einen Zeiger darauf zurückzugeben.

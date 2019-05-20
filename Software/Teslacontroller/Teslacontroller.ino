@@ -51,9 +51,10 @@ void loop(void) {
     resetUserInput();
     pollUserInput();
   }
-//  loadMidiFile();
-//  playMidiFile();
-  pollMediaPlayer();
+  loadMidiFile();
+  if(playMidiFile()) refreshScreen();
+
+
   pollMidiIn();
   //Serial.println("poll");
 

@@ -1,5 +1,4 @@
 #include <U8g2lib.h>
-#include <EEPROM.h>
 #include <SPI.h>
 
 
@@ -7,13 +6,7 @@
 #include "logo.cpp"
 
 
-#define eeAddress 0 //Startadresse für das Auslesen vom EEPROM
-//Datentyp für Einstellungen
-struct set {
-  int source[4];
-  int coilType[4];
-};
-set getSettings(void);
+
 //Methoden zum Einlesen der Knöpfe
 
 void pollUserInput(void);
@@ -36,9 +29,7 @@ void printCoilTestScreen(void);
 void printSelfTestScreen(void);
 void printCreditsScreen(void);
 
-//Aktionen
-void loadSettings();
-void saveSettings(int, set);
+
 
 //Konversionsmethoden
 String sourceToString (int);

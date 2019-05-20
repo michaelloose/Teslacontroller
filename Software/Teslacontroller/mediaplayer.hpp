@@ -12,11 +12,12 @@ String getFileList(byte);
 byte getCurrentFile(void);
 bool getPlayingState(void);
 void setCurrentFile(byte);
+void setFileSelected(void);
 
 int getNumberOfLoadedFiles(void);
 
 void loadMidiFile(void);
-void playMidiFile(void);
+bool playMidiFile(void);
 void pollMediaPlayer(void);
 int initializeSD(void);
 void createfileList(File dir);
