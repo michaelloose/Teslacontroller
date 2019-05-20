@@ -158,32 +158,36 @@ void onEncoderChange(bool direction) {
 
   //Wird gerade das Menü angezeigt?
   if (currentScreen == 0) {
+    set locSettings = getSettings(); //Zieht eine lokale Kopie des Structs Settings
     //Ist gerade Source ausgewählt?
     if (cursorPosition % 10 == 1) {
       //Schreibe den aktuellen Wert in das korrekte Feld.
       //Die Operation nimmt den Zehner von cursorPosition-1, also die entsprechende Ausgangsnummer
 
+
+
       if (direction) {
-        if (getSettings().source[((cursorPosition / 10) % 10) - 1] < 11) setSettings.source[((cursorPosition / 10) % 10) - 1]++;
-        else getSettings().source[((cursorPosition / 10) % 10) - 1] = 0;
+        if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
+        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
       }
       else {
-        if (getSettings().source[((cursorPosition / 10) % 10) - 1] > 0) setSettings.source[((cursorPosition / 10) % 10) - 1]--;
-        else setSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
+        if (locSettings.source[((cursorPosition / 10) % 10) - 1] > 0) locSettings.source[((cursorPosition / 10) % 10) - 1]--;
+        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
       }
     }
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {
       if (direction) {
 
-        if (getSettings().coilType[((cursorPosition / 10) % 10) - 1] < 20) setSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
-        else setSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
+        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 20) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
+        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
       }
       else {
-        if (getSettings().coilType[((cursorPosition / 10) % 10) - 1] > 0) setSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
-        else setSettings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
+        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] > 0) locSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
+        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
       }
     }
+    setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
 
   }
   refreshScreen();

@@ -17,6 +17,8 @@ struct set {
   int coilType[4];
 };
 
+
+
 set getSettings(void);
 void setSettings(set);
 

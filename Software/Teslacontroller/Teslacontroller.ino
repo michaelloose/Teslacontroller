@@ -18,11 +18,7 @@
 #include<SPI.h>
 //Die eigenen Headerfiles
 #include "ui.hpp"
-#include "pcf8574.hpp"
-#include "mediaplayer.hpp"
 #include "MIDI_Recieve.hpp"
-
-
 
 
 void setup(void) {
