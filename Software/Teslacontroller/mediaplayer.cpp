@@ -108,10 +108,11 @@ void playFile(void) {
 }
 
 void pauseFile(void) {
-  playing = false;
-  midiSilence();
-  //SMF.pause(true);
-
+  if(playing){
+    playing = false;
+    midiSilence();
+    //SMF.pause(true);
+  }
 }
 
 void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen

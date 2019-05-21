@@ -14,11 +14,17 @@
 
 void pollMidiIn(void) {
 
-  if (Serial3.available()) {
-
-    int incomingByte = Serial3.read();
-    if (incomingByte & 0b10000000) {
-      Serial.println(incomingByte, HEX);
+  do {
+    if (Serial3.available()) {
+      byte byte0 = Serial3.read(); //Status/Channel byte auslesen
+      byte byte1 = Serial3.read(); //Datenbyte 1 auslesen
+      byte byte2 = Serial3.read(); //Datenbyte 2 auslesen
     }
-  }
+
+
+  }  while (Serial3.available() > 2); //Wenn mindestens 3 byte im Puffer sind
+
+
+
+
 }

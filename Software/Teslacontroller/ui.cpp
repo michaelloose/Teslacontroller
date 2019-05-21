@@ -216,7 +216,7 @@ void onButtonClicked(uint8_t pin) {
     //Play Taste. Wenn im Moment Pause aktiv ist und eine Datei gewählt ist soll die Wiedergabe beginnen.
     if (pin == 6 && !getPlayingState() && (getFileList(getCurrentFile()) != 0)) playFile();
     //Wenn eine Taste gefrückt wird soll die Wiedergabe pausiert werden.
-    else pauseFile();
+    else if(getPlayingState()) pauseFile();
     //Auswahl der Felder
     //cursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
     //out1 Taste
