@@ -7,7 +7,7 @@
 //FHWS Fakultät Elektrotechnik
 //
 //Erstellung: 4/2019
-//Stand: 10/05/2019
+//Stand: 22/05/2019
 //////////////////////////////////////////////////////////////////////
 
 //SYNTAX AUSGABE: readMidi(byte0, byte1, byte2)
@@ -93,7 +93,8 @@ readData:
   SMF.begin(&SD);
   SMF.setMidiHandler(midiCallback);
   SMF.setSysexHandler(sysexCallback);
-  //SMF.looping(true);
+  SMF.close();  //Datei schließen, falls eine geöffnet war
+  
 
   SPI.end();
 
@@ -104,14 +105,14 @@ readData:
 //Wird im Durchlauf aufgerufen. Setzt nur das Playing Bit
 void playFile(void) {
   playing = true;
-  //SMF.pause(false);
+  SMF.pause(false);
 }
 
 void pauseFile(void) {
   if(playing){
     playing = false;
     midiSilence();
-    //SMF.pause(true);
+    SMF.pause(true);
   }
 }
 
@@ -135,10 +136,11 @@ void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
 
       //delay(2000);
     }
-    else{
-      Serial.println(playing);
+
+   
       
-    }
+      
+    
     }
     
   }
@@ -161,7 +163,7 @@ bool playMidiFile(void){            // Midi Datei abspielen
     midiSilence();
     playing = false;
     
-    currentFile++;
+//    currentFile++;
     fileSelected = 1;
     
     SPI.end();
@@ -228,6 +230,8 @@ bool isMidi(char* filename) {
   bool result;
   if (  strstr(strlwr(filename + (len - 4)), ".MID")
         || strstr(strlwr(filename + (len - 4)), ".mid")
+        || strstr(strlwr(filename + (len - 4)), ".tmf")
+        || strstr(strlwr(filename + (len - 4)), ".TMF")
         // and anything else you want
      ) {
     result = true;
@@ -243,15 +247,9 @@ void midiCallback(midi_event *pev)
 // thru the midi communications interface.
 // This callback is set up in the setup() function.
 {
-  //#if USE_MIDI
-  //  if ((pev->data[0] >= 0x80) && (pev->data[0] <= 0xe0))
-  //  {
-  //    Serial.write(pev->data[0] | pev->channel);
-  //    Serial.write(&pev->data[1], pev->size - 1);
-  //  }
-  //  else
-  //    Serial.write(pev->data, pev->size);
-  //#endif
+  if((pev->channel) < 4){ 
+
+  if(false){
   Serial.print("\n");
   Serial.print(" T");
   Serial.print(pev->track);
@@ -263,7 +261,9 @@ void midiCallback(midi_event *pev)
     Serial.print(pev->data[i], HEX);
     Serial.print(' ');
   }
-  readMidi(pev->data[0] | pev->channel, pev->data[1], pev->data[2]);
+  }
+  readMidi(pev->data[0] | pev->channel+4, pev->data[1], pev->data[2]);
+  }
 }
 
 

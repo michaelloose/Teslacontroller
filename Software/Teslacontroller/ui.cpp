@@ -194,13 +194,13 @@ void onEncoderChange(bool direction) {
 }
 //Wird bei erkanntem Tastendruck aufgerufen
 void onButtonClicked(uint8_t pin) {
-
-  Serial.println(getCurrentFile());
-  //Ausgabe fürs Debugging
-  Serial.print("S");
-  Serial.print(pin);
+  if (getPlayingState()){ //Wenn gerade die Wiedergabe läuft
+    pauseFile(); //Widergabe beim Druck der Menü Taste pausieren
+    pin = 0; //Diese Eingabe ignorieren
+  }
   //Menü/Home Taste
   if (pin == 5) {
+
     cursorPosition = 0;
     encpos = 0;
 
@@ -216,7 +216,7 @@ void onButtonClicked(uint8_t pin) {
     //Play Taste. Wenn im Moment Pause aktiv ist und eine Datei gewählt ist soll die Wiedergabe beginnen.
     if (pin == 6 && !getPlayingState() && (getFileList(getCurrentFile()) != 0)) playFile();
     //Wenn eine Taste gefrückt wird soll die Wiedergabe pausiert werden.
-    else if(getPlayingState()) pauseFile();
+
     //Auswahl der Felder
     //cursorPosition: Zehner sind die Spalte, einer die Zeile, von oben gelesen.
     //out1 Taste

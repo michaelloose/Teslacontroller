@@ -1,12 +1,7 @@
-
 #include <arduino.h>
-
-float readMidi(byte, byte, byte);
-
-// Aktiver MIDI Kanal, 0x00 - 0x0F
-#define responseChannel 0x00
-// ueberschreibt die Kanalselektierung
-#define respondAllChannels false
+#define DSP_Adress 0x34
+#include <Wire.h>
+#include "pcf8574.hpp"
 
 // midi commands
 #define MIDI_CMD_NOTE_OFF 0x80
@@ -21,9 +16,10 @@ float readMidi(byte, byte, byte);
 #define MIDI_CMD_PITCH_BEND 0xE0
 #define MIDI_CMD_SYSEX 0xF0
 
-//leerers Dummy Byte. Wird eingesetzt sobald ein Befehl ignoriert werden soll
-#define MIDI_IGNORE 0x00
 
-// midi "state" - which data byte we are receiving
-#define MIDI_STATE_BYTE1 0x00
-#define MIDI_STATE_BYTE2 0x01
+
+
+void readMidi(byte, byte, byte);
+void outputMidiToDSP(byte , byte, byte);
+void noteOff(byte);
+void noteOn(byte, uint32_t, uint32_t);
