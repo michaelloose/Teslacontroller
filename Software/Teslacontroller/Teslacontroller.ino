@@ -16,10 +16,11 @@
 //lokale Variablen, welche sich von globalen ableiten bekommen die vorsilbe loc
 
 #include<SPI.h>
-//Die eigenen Headerfiles
 #include "ui.hpp"
-#include "MIDI_Recieve.hpp"
+#include <MIDI.h>
 
+//MIDI Bibliothek: Schnittstelle deklarieren
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI3);
 
 void setup(void) {
 
@@ -32,10 +33,15 @@ void setup(void) {
 
   // Initialisierung der seriellen Schnittstellen
   Serial.begin(9600); //Debugging Schnittstelle
-  Serial3.begin(31250); //MIDI Schnittstelle
+  // Serial3.begin(31250); //MIDI Schnittstelle
 
   loadSettings();
   // PCF8575 für Benutzereingaben initialisieren
+  
+  //MIDI Bibliothek: Initialisieren
+  MIDI3.setHandleNoteOn(readMidiInputOn);
+  MIDI3.setHandleNoteOff(readMidiInputOff);
+  MIDI3.begin(MIDI_CHANNEL_OMNI);
 
   initialiseButtons();
   refreshScreen();
@@ -48,11 +54,10 @@ void loop(void) {
     pollUserInput();
   }
   loadMidiFile();
-  if(playMidiFile()) refreshScreen();
+  if (playMidiFile()) refreshScreen();
 
 
-  pollMidiIn();
-  //Serial.println("poll");
-
+  //MIDI Bibliothek: Auslesen 
+  MIDI3.read();
 
 }

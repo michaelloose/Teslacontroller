@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 #include "MIDI_Read.hpp"
 #include <SPI.h>
 #include <SdFat.h>

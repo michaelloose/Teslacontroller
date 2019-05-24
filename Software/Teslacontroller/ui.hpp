@@ -1,5 +1,5 @@
-#include <U8g2lib.h>
-#include <SPI.h>
+//#include <U8g2lib.h>
+#include "lib/SPI/src/SPI.h"
 
 
 #include "mediaplayer.hpp"

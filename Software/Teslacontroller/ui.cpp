@@ -179,12 +179,12 @@ void onEncoderChange(bool direction) {
     if (cursorPosition % 10 == 2) {
       if (direction) {
 
-        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 20) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
+        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 99) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
       }
       else {
         if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] > 0) locSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
-        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 20;
+        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 99;
       }
     }
     setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
@@ -388,7 +388,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 12) u8g2.drawBox(xcol1, yrow1, 29, height);
   else u8g2.drawFrame(xcol1, yrow1, 29, height);
 
-  u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "ct");
+  u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "to");
   intToString(getSettings().coilType[0]).toCharArray(out, 5); //Siehe ein paar Zeilen weiter unten
   u8g2.drawStr(width * 2 + 3 + xcol1, yrow1 + height - 3, out );
 
@@ -408,7 +408,7 @@ void printHomeScreen(bool locinputState[3]) {
   //CoilType Anzeige
   if (cursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
   else u8g2.drawFrame(xcol2, yrow1, 29, height);
-  u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "ct");
+  u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "to");
   intToString(getSettings().coilType[1]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol2, yrow1 + height - 3, out);
 
@@ -427,7 +427,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 32) u8g2.drawBox(xcol3, yrow1, 29, height);
   else u8g2.drawFrame(xcol3, yrow1, 29, height);
 
-  u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "ct");
+  u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "to");
   intToString(getSettings().coilType[2]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol3, yrow1 + height - 3, out);
 
@@ -446,7 +446,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 42) u8g2.drawBox(xcol4, yrow1, 29, height);
   else u8g2.drawFrame(xcol4, yrow1, 29, height);
 
-  u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "ct");
+  u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "to");
   intToString(getSettings().coilType[3]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol4, yrow1 + height - 3, out);
 
@@ -660,7 +660,7 @@ String intToString(int zahl) {
     buf1[2] = '\0';
     return buf1;
   }
-  else if (zahl >= 10 && zahl < 99) {
+  else if (zahl >= 10 && zahl < 100) {
     char buf2[3];
     sprintf (buf2, "%1i", zahl);
     return buf2;
