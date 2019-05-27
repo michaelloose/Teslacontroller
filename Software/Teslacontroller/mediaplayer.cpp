@@ -24,8 +24,8 @@ boolean fileSelected = 0;
 SdFat SD;
 MD_MIDIFile SMF;
 File root;
-const int mSDcard = 40; // Entsprechenden Pin einfügen (20-49)
-const int SDcard = 53; // Entsprechenden Pin einfügen   (20-49)
+const int mSDcard = 53; // Entsprechenden Pin einfügen (20-49)
+const int SDcard = 9; // Entsprechenden Pin einfügen   (20-49)
 // MISO 50; MOSI 51; SCK 52
 
 #define USE_MIDI 1
