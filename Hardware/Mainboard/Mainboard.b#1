@@ -3291,7 +3291,7 @@ design rules under a new name.</description>
 <attribute name="NAME" x="112.2934" y="10.795" size="1.27" layer="25" ratio="10" rot="R270"/>
 <attribute name="VALUE" x="109.9566" y="10.7696" size="1.27" layer="27" ratio="10" rot="R270"/>
 </element>
-<element name="R8" library="rcl" package="R0805" value="220R" x="111.76" y="22.86" rot="R270">
+<element name="R8" library="rcl" package="R0805" value="470R" x="111.76" y="22.86" rot="R270">
 <attribute name="NAME" x="113.03" y="23.495" size="1.27" layer="25" rot="R270"/>
 <attribute name="VALUE" x="109.22" y="23.495" size="1.27" layer="27" rot="R270"/>
 </element>

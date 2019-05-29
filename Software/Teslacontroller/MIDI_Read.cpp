@@ -12,7 +12,7 @@
 
 #include"MIDI_Read.hpp"
 
-//int onTime = 20; //In Vielfachen der halben Samplingdauer (=20,833µs)
+int coilType = 0;
 
 byte freqAdress[] = {0x00, 0x04, 0x08, 0x0c};  //Registeradressen für die Frequenz des jeweiligen Outputs
 byte dutyAdress[] = {0x01, 0x05, 0x09, 0x0d};  //Registeradressen für das Tastverhältnis jeweiligen Outputs
@@ -79,14 +79,20 @@ void outputMidiToDSP(byte byte0, byte byte1, byte byte2) {
     if ((byte0 & 0xF0) == MIDI_CMD_NOTE_ON) { //Note on
       playingTone[channel] = 0b01111111 & byte1;
 
-      playingDutyCycle[channel] =  pgm_read_dword(&frequency[playingTone[channel]])* getSettings().coilType[channel];
+      //Liest das gewünschte Tastverhältnis aus dem EEprom aus
+      int eeReadAddress = eeDCAddress + (getSettings().coilType[channel] * 512) + (4 * playingTone[channel]);
+      EEPROM.get(eeReadAddress, playingDutyCycle[channel] );
+
+      //Bestimmt das Tastverhältnis aus einer konstanten On Time
+      //War der alte Ansatz
+      //playingDutyCycle[channel] =  pgm_read_dword(&frequency[playingTone[channel]])* getSettings().coilType[channel];
 
       Serial.print(pgm_read_dword(&frequency[playingTone[channel]]));
       Serial.print(" ");
       Serial.println(playingDutyCycle[channel], HEX);
 
 
-      noteOn(channel, pgm_read_dword(&frequency[playingTone[channel]]) , playingDutyCycle[channel]);
+      noteOn(channel, getFrequency(playingTone[channel]) , playingDutyCycle[channel]);
       //Serial.print("AN");
     }
 
@@ -154,4 +160,7 @@ void noteOff(byte output) {
   Wire.write(transmitData, 6);
   Wire.endTransmission(DSP_Adress);
 
+}
+uint32_t getFrequency(byte midiValue){
+return pgm_read_dword(&frequency[midiValue]);  
 }

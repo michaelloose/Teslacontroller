@@ -18,7 +18,7 @@ set settings; //Variable zum Speichern der Einstellungen erstellen
 
 void loadSettings() {
   //Einstellungen aus dem EEprom laden
-  EEPROM.get( eeAddress, settings); //Laden der Einstellungen aus dem EEprom
+  EEPROM.get(eeSettingsAddress , settings); //Laden der Einstellungen aus dem EEprom
 
   //DEBUG CODE
   //Serielle ausgabe der Einstellungen
@@ -43,7 +43,7 @@ void loadSettings() {
 }
 
 void saveSettings() {
-  EEPROM.put(eeAddress , settings);
+  EEPROM.put(eeSettingsAddress , settings);
   Serial.print("Saving Complete");
 }
 

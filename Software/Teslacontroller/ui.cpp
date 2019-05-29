@@ -22,13 +22,21 @@ bool encminus = true;
 byte encpos = 0;
 byte encmax = 5;
 byte scrollpos = 0;
+
 //Aktuell ausgewähltes Feld
+byte cursorPositionOld = 255;
 byte cursorPosition = 0;
+byte cursorPosition1 = 0;
+//Globaler Zwischenspeicher für verschiedene Werte
+uint32_t stor;
+
+//DutyCycle der im Menü verstellt werden kann
+float dutyCycle;
 
 
 
 //Wird ständig gepolled. Prüft ob das Bit für die Benutzereingabe gesetzt wurde.
-void pollUserInput() {
+void readUserInput() {
 
   //Auslesen der Daten über i2c
   Wire.requestFrom(pcf8575adress, 1);
@@ -64,9 +72,10 @@ void pollUserInput() {
 //1: Menü
 //2: Player File Auswahl
 //3: Coil Setup
-//4: Coil Test/Manual Mode
-//5: Self Test
-//6: Credits
+//4: Coil Setup2 (untermenü)
+//5: Coil Test/Manual Mode
+//6: Self Test
+//7: Credits
 
 byte currentScreen = 0;
 
@@ -85,12 +94,15 @@ void refreshScreen(void) {
       printCoilSetupScreen();
       break;
     case 4:
-      printCoilTestScreen();
+      printCoilSetupScreen2();
       break;
     case 5:
-      printSelfTestScreen();
+      printCoilTestScreen();
       break;
     case 6:
+      printSelfTestScreen();
+      break;
+    case 7:
       printCreditsScreen();
       break;
   }
@@ -102,8 +114,55 @@ void refreshScreen(void) {
 
 //Wird bei erkanntem Drehen des Encoders aufgerufen
 void onEncoderChange(bool direction) {
-  Serial.print("Encoder change ");
-  // Ist gerade die Dateiauswahl aktiv?
+
+  //GRUNDBILD
+  if (currentScreen == 0) {
+    set locSettings = getSettings(); //Zieht eine lokale Kopie des Structs Settings
+    //Ist gerade Source ausgewählt?
+    if (cursorPosition % 10 == 1) {
+      //Schreibe den aktuellen Wert in das korrekte Feld.
+      //Die Operation nimmt den Zehner von cursorPosition-1, also die entsprechende Ausgangsnummer
+
+
+
+      if (direction) {
+        if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
+        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
+      }
+      else {
+        if (locSettings.source[((cursorPosition / 10) % 10) - 1] > 0) locSettings.source[((cursorPosition / 10) % 10) - 1]--;
+        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
+      }
+    }
+    //Ist CoilType gewählt?
+    if (cursorPosition % 10 == 2) {
+      if (direction) {
+
+        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 5) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
+        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
+      }
+      else {
+        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] > 0) locSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
+        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 5;
+      }
+    }
+    setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
+
+  }
+
+  //MENÜ
+  //Cursor soll nur von oben bis unten laufen
+  if (currentScreen == 1 || currentScreen == 3) {
+    if (direction) {
+      if (encpos < encmax) encpos++;
+      else encpos = 0;
+    }
+    else {
+      if (encpos > 0) encpos--;
+      else encpos = encmax;
+    }
+  }
+  // FILE LIST
   // Dateiliste kann gescrolled werden
   if (currentScreen == 2) {
     //Drehung im Uhrzeigersinn
@@ -144,57 +203,27 @@ void onEncoderChange(bool direction) {
       }
     }
   }
-  else {
+
+
+  //CoilTypeSetup Untermenü
+  if (currentScreen == 4) {
     if (direction) {
-      if (encpos < encmax) encpos++;
-      else encpos = 0;
+      if (dutyCycle < 99.5) dutyCycle += 0.5;
+      else dutyCycle = 0;
     }
     else {
-      if (encpos > 0) encpos--;
-      else encpos = encmax;
+      if (dutyCycle > 0) dutyCycle -= 0.5;
+      else dutyCycle = 99.5;
     }
-  }
-  Serial.println(encpos);
-
-  //Wird gerade das Menü angezeigt?
-  if (currentScreen == 0) {
-    set locSettings = getSettings(); //Zieht eine lokale Kopie des Structs Settings
-    //Ist gerade Source ausgewählt?
-    if (cursorPosition % 10 == 1) {
-      //Schreibe den aktuellen Wert in das korrekte Feld.
-      //Die Operation nimmt den Zehner von cursorPosition-1, also die entsprechende Ausgangsnummer
-
-
-
-      if (direction) {
-        if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
-        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
-      }
-      else {
-        if (locSettings.source[((cursorPosition / 10) % 10) - 1] > 0) locSettings.source[((cursorPosition / 10) % 10) - 1]--;
-        else locSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
-      }
-    }
-    //Ist CoilType gewählt?
-    if (cursorPosition % 10 == 2) {
-      if (direction) {
-
-        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 99) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
-        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
-      }
-      else {
-        if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] > 0) locSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
-        else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 99;
-      }
-    }
-    setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
 
   }
+
   refreshScreen();
 }
 //Wird bei erkanntem Tastendruck aufgerufen
+
 void onButtonClicked(uint8_t pin) {
-  if (getPlayingState()){ //Wenn gerade die Wiedergabe läuft
+  if (getPlayingState()) { //Wenn gerade die Wiedergabe läuft
     pauseFile(); //Widergabe beim Druck der Menü Taste pausieren
     pin = 0; //Diese Eingabe ignorieren
   }
@@ -202,6 +231,8 @@ void onButtonClicked(uint8_t pin) {
   if (pin == 5) {
 
     cursorPosition = 0;
+    cursorPosition1 = 0;
+    cursorPositionOld = 255;
     encpos = 0;
 
     if (currentScreen == 0) currentScreen = 1;
@@ -270,57 +301,105 @@ void onButtonClicked(uint8_t pin) {
       else cursorPosition = 41;
     }
   }
-  // MENÜ
-  if (currentScreen == 1) {
-    //Encoder gedrückt
-    if (pin == 6) {
 
-      //Gerade "SaveSettings" gewählt?
-      if (encpos == 0) {
-        saveSettings();
-        currentScreen = 0;
-      }
-      //Gerade "Player File" gewählt?
-      if (encpos == 1) {
-        encpos = 0;
-        //SD ohne Fehler gelesen
-        if (initializeSD() == -1) {
-          printPlayerFileScreen();
-          currentScreen = 2;
-        }
-        //SD Lesefehler
-        else {
-          //Hier soll noch einn FEHLER POPUP eingeblendet werden                                                                                      TBD
-          currentScreen = 0;
-        }
-      }
-      //Gerade "Coil Setup" gewählt?
-      if (encpos == 2) {
-        currentScreen = 3;
-      }
-      //Gerade "Coil Test/Manual Mode" gewählt?
-      if (encpos == 3) {
-        currentScreen = 4;
-      }
-      //Gerade "Self Test" gewählt?
-      if (encpos == 4) {
-        currentScreen = 5;
-      }
-      //Gerade "Credits" gewählt?
-      if (encpos == 5) {
-        currentScreen = 6;
-      }
+  //CoilTypeSetup Untermenü
+  if (currentScreen == 4) {
+    //Zurück Taste
+    if (pin == 1) {
+      //Speichern des aktuellen Wertes
+      int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
+      EEPROM.put(eeReadAddress, stor);
 
+      //Zurück gehen
+      cursorPosition = 0;
+      cursorPosition1 = 0;
+      cursorPositionOld = 255;
+      currentScreen = 3;
 
+    }
+    //Pfeil nach links
+    if (pin == 2) {
+
+      //Speichern des aktuellen Wertes
+      int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
+      EEPROM.put(eeReadAddress, stor);
+      
+      //Nach links gehen
+      if (cursorPosition1 == 0) cursorPosition1 = 127;
+      else cursorPosition1--;
+
+    }
+    //Pfeil nach rechts
+    if (pin == 3) {
+      //Speichern des aktuellen Wertes
+      int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
+      EEPROM.put(eeReadAddress, stor);
+      
+      //Nach rechts gehen
+      if (cursorPosition1 == 127) cursorPosition1 = 0;
+      else cursorPosition1++;
 
     }
   }
+
   //Bei der Dateiauswahl die aktuelle Datei übernehmen
   if (currentScreen == 2 && pin == 6 && getNumberOfLoadedFiles() > 0) {
     setCurrentFile(scrollpos + encpos);
     setFileSelected(); //Setzt ein Bit was dem Mediaplayer zeigt dass eine neue Datei ausgewählt wurde.
-    //currentScreen = 0;
+    currentScreen = 0;
   }
+
+  //CoilSetup Menü: Nach erster Auswahl ins Untermenü gehen
+  if (currentScreen == 3 && pin == 6) {
+    cursorPosition = encpos;
+    currentScreen = 4;
+  }
+
+
+
+  // MENÜ
+  //Wenn Wir im Menü sind und der Encoder geclickt wurde.
+  if (currentScreen == 1 && pin == 6) {
+
+    //Gerade "SaveSettings" gewählt?
+    if (encpos == 0) {
+      saveSettings();
+      currentScreen = 0;
+    }
+    //Gerade "Player File" gewählt?
+    if (encpos == 1) {
+      //SD ohne Fehler gelesen
+      if (initializeSD() == -1) {
+        printPlayerFileScreen();
+        currentScreen = 2;
+      }
+      //SD Lesefehler
+      else {
+        //Hier soll noch einn FEHLER POPUP eingeblendet werden                                                                                      TBD
+        currentScreen = 0;
+      }
+    }
+    //Gerade "Coil Setup" gewählt?
+    if (encpos == 2) {
+      currentScreen = 3;
+    }
+    //Gerade "Coil Test/Manual Mode" gewählt?
+    if (encpos == 3) {
+      currentScreen = 5;
+    }
+    //Gerade "Self Test" gewählt?
+    if (encpos == 4) {
+      currentScreen = 6;
+    }
+    //Gerade "Credits" gewählt?
+    if (encpos == 5) {
+      currentScreen = 7;
+    }
+    encpos = 0;
+    //Im neuen Screen soll der Encoder wieder bei 0 stehen
+  }
+
+
 
   refreshScreen();
 }
@@ -361,20 +440,6 @@ void printHomeScreen(bool locinputState[3]) {
 
   int height = u8g2.getMaxCharHeight() + 3;
   int width = u8g2.getMaxCharWidth();
-  const byte xcol1 = 0;
-  const byte xcol2 = 54;
-  const byte xcol3 = 108;
-  const byte xcol4 = 162;
-  const byte xcol5 = 224;
-  const byte xtop1 = 0;
-  const byte xtop2 = 60;
-  const byte xtop3 = 120;
-  const byte xtop4 = 180;
-
-  const byte ytop = 0;
-  const byte ybot = 55;
-  const byte yrow1 = 36;
-  const byte yrow2 = 23;
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
@@ -388,7 +453,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 12) u8g2.drawBox(xcol1, yrow1, 29, height);
   else u8g2.drawFrame(xcol1, yrow1, 29, height);
 
-  u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "to");
+  u8g2.drawStr(xcol1 + 3, yrow1 + height - 3, "ct");
   intToString(getSettings().coilType[0]).toCharArray(out, 5); //Siehe ein paar Zeilen weiter unten
   u8g2.drawStr(width * 2 + 3 + xcol1, yrow1 + height - 3, out );
 
@@ -408,7 +473,7 @@ void printHomeScreen(bool locinputState[3]) {
   //CoilType Anzeige
   if (cursorPosition == 22) u8g2.drawBox(xcol2, yrow1, 29, height);
   else u8g2.drawFrame(xcol2, yrow1, 29, height);
-  u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "to");
+  u8g2.drawStr(xcol2 + 3, yrow1 + height - 3, "ct");
   intToString(getSettings().coilType[1]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol2, yrow1 + height - 3, out);
 
@@ -427,7 +492,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 32) u8g2.drawBox(xcol3, yrow1, 29, height);
   else u8g2.drawFrame(xcol3, yrow1, 29, height);
 
-  u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "to");
+  u8g2.drawStr(xcol3 + 3, yrow1 + height - 3, "ct");
   intToString(getSettings().coilType[2]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol3, yrow1 + height - 3, out);
 
@@ -446,7 +511,7 @@ void printHomeScreen(bool locinputState[3]) {
   if (cursorPosition == 42) u8g2.drawBox(xcol4, yrow1, 29, height);
   else u8g2.drawFrame(xcol4, yrow1, 29, height);
 
-  u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "to");
+  u8g2.drawStr(xcol4 + 3, yrow1 + height - 3, "ct");
   intToString(getSettings().coilType[3]).toCharArray(out, 5);
   u8g2.drawStr(width * 2 + 3 + xcol4, yrow1 + height - 3, out);
 
@@ -497,8 +562,6 @@ void printHomeScreen(bool locinputState[3]) {
 
 void printMenuScreen(void) {
 
-  const int xtext = 10;
-  const int xcursor = 0;
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
   encmax = 5; //Der Cursor soll Werte zwischen 0 und 5 annehmen
@@ -520,11 +583,9 @@ void printMenuScreen(void) {
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
+
+
 void printPlayerFileScreen(void) {
-
-
-  const int xtext = 10;
-  const int xcursor = 0;
   const int ypos[6] = {10, 20, 30, 40, 50, 60};
 
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
@@ -550,8 +611,27 @@ void printPlayerFileScreen(void) {
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
+
+
+
 void printCoilSetupScreen(void) {
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+
+  const int ypos[6] = {10, 20, 30, 40, 50, 60};
+
+  encmax = 5; //Der Cursor soll Werte zwischen 0 und 5 annehmen
+
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+  u8g2.drawStr(xcursor, ypos[encpos], ">"); //Cursor an entsprechender Position anzeigen
+
+  u8g2.drawStr(xtext, ypos[0], "Coil Type 0 (default)");
+  u8g2.drawStr(xtext, ypos[1], "Coil Type 1");
+  u8g2.drawStr(xtext, ypos[2], "Coil Type 2");
+  u8g2.drawStr(xtext, ypos[3], "Coil Type 3");
+  u8g2.drawStr(xtext, ypos[4], "Coil Type 4");
+  u8g2.drawStr(xtext, ypos[5], "Coil Type 5");
 
 
 
@@ -561,6 +641,70 @@ void printCoilSetupScreen(void) {
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
+
+void printCoilSetupScreen2(void) {
+  int height = u8g2.getMaxCharHeight() + 3;
+  int width = u8g2.getMaxCharWidth();
+  int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
+  if (cursorPositionOld != cursorPosition1) {
+
+    EEPROM.get(eeReadAddress, stor);
+    dutyCycle = stor / 83886.08;
+    cursorPositionOld = cursorPosition1;
+  }
+
+  float frequency = getFrequency(cursorPosition1) / 174.76;
+  stor = dutyCycle * 83886.08;
+
+  //DEBUG
+  Serial.print(eeReadAddress);
+  Serial.print('\t');
+  Serial.println(stor, HEX);
+
+  u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
+
+  //Titelzeile
+  u8g2.drawStr(xtext, 10, "Coil Type ");
+  u8g2.setCursor(xtext + width * 10, 10);
+  u8g2.print(cursorPosition);
+
+  //Erste Zeile
+
+  u8g2.setCursor(xtext, 30);
+  u8g2.print("MIDI Nr:");
+  u8g2.print(cursorPosition1);
+  u8g2.print(" (");
+  u8g2.print(frequency);
+  u8g2.print("Hz)");
+
+  u8g2.setCursor(xtext + width * 25, 30);
+  u8g2.print("Duty Cycle:");
+  u8g2.print(dutyCycle, 1);
+  u8g2.print("%");
+
+
+  //untere Schaltfläche
+  u8g2.drawRFrame(xcol1, ybot, 29, height, 4);
+  u8g2.drawStr(xcol1 + 3, 64, "back");
+  u8g2.drawRFrame(xcol2, ybot, 29, height, 4);
+  u8g2.drawStr(xcol2 + 3, 64, " <- ");
+
+  u8g2.drawRFrame(xcol3, ybot, 29, height, 4);
+  u8g2.drawStr(xcol3 + 3, 64, " -> ");
+
+
+  //cursorPosition ist hier der zu editierende CoilType, cursorPosition1 der ausgewählte Wert dieses CoilTypes
+
+
+
+  //home button
+  u8g2.drawRFrame(224, 55, 29, 13, 4);
+  u8g2.drawStr(227, 64, "home");
+
+  u8g2.sendBuffer(); //Full Buffer Mode: senden
+}
+
+
 void printCoilTestScreen(void) {
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 
@@ -583,6 +727,8 @@ void printSelfTestScreen(void) {
 
   u8g2.sendBuffer(); //Full Buffer Mode: senden
 }
+
+
 void printCreditsScreen(void) {
   u8g2.clearBuffer(); //Full Buffer Mode: Buffer leeren
 

@@ -24,6 +24,8 @@ void readMidi(byte, byte, byte);
 void readMidiInputOn(byte, byte, byte);
 void readMidiInputOff(byte, byte, byte);
 
+
+uint32_t getFrequency(byte);
 void outputMidiToDSP(byte , byte, byte);
 void noteOff(byte);
 void noteOn(byte, uint32_t, uint32_t);

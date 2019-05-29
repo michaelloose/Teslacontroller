@@ -36,14 +36,22 @@ void setup(void) {
   // Serial3.begin(31250); //MIDI Schnittstelle
 
   loadSettings();
+
   // PCF8575 für Benutzereingaben initialisieren
-  
+  initialiseButtons();
+
+  //Default CoilType wiederherstellen
+  for (int i = 0; i < 128; i++) {
+    EEPROM.put(eeDCAddress+(i*4), 0x400000);
+  }
+
+
   //MIDI Bibliothek: Initialisieren
   MIDI3.setHandleNoteOn(readMidiInputOn);
   MIDI3.setHandleNoteOff(readMidiInputOff);
   MIDI3.begin(MIDI_CHANNEL_OMNI);
 
-  initialiseButtons();
+
   refreshScreen();
 
 }
@@ -51,13 +59,13 @@ void setup(void) {
 void loop(void) {
   if (getUserInput()) {
     resetUserInput();
-    pollUserInput();
+    readUserInput();
   }
   loadMidiFile();
   if (playMidiFile()) refreshScreen();
 
 
-  //MIDI Bibliothek: Auslesen 
+  //MIDI Bibliothek: Auslesen
   MIDI3.read();
 
 }
