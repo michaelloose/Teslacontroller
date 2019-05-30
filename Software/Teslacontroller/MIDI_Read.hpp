@@ -1,3 +1,6 @@
+#ifndef MIDI_Read.hpp
+#define MIDI_Read.hpp
+
 #include <arduino.h>
 #include <Wire.h>
 #include "pcf8574.hpp"
@@ -29,3 +32,7 @@ uint32_t getFrequency(byte);
 void outputMidiToDSP(byte , byte, byte);
 void noteOff(byte);
 void noteOn(byte, uint32_t, uint32_t);
+
+
+
+#endif

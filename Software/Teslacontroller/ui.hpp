@@ -1,3 +1,8 @@
+#ifndef ui.hpp
+#define ui.hpp
+
+
+
 //#include <U8g2lib.h>
 #include "lib/SPI/src/SPI.h"
 
@@ -51,3 +56,9 @@ void printCreditsScreen(void);
 //Konversionsmethoden
 String sourceToString (int);
 String intToString(int);                                                        //Mögliche Verbesserung: String(var, DEC) benutzen
+
+
+
+
+
+#endif

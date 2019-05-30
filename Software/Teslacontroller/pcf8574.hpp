@@ -1,9 +1,13 @@
+#ifndef pcf8574.hpp
+#define pcf8574.hpp
+
+
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <Wire.h>
 
-//Das hier verursacht den Fehler
-//#include "ui.hpp"
+//Das hier verursachte den Fehler                                                                                               Fehler behoben!!
+#include "ui.hpp"
 
 #define pcf8575adress 0x20 //I2c Adresse des Pin Expanders an dem die Knöpfe hängen
 #define eeSettingsAddress 0 //Startadresse für das Auslesen vom EEPROM
@@ -29,3 +33,7 @@ void setSettings(set);
 //Aktionen
 void loadSettings();
 void saveSettings();
+
+
+
+#endif
