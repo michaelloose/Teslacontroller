@@ -12,7 +12,8 @@
 
 #include"MIDI_Read.hpp"
 
-int coilType = 0;
+byte pitchBendRange = 2; //In Halbtönen
+int bend[4] = {0x2000, 0x2000, 0x2000, 0x2000};
 
 byte freqAdress[] = {0x00, 0x04, 0x08, 0x0c};  //Registeradressen für die Frequenz des jeweiligen Outputs
 byte dutyAdress[] = {0x01, 0x05, 0x09, 0x0d};  //Registeradressen für das Tastverhältnis jeweiligen Outputs
@@ -21,9 +22,57 @@ byte outAdress[] = {0x02, 0x06, 0x0a, 0x0e};   //Registeradressen füs Aktiviere
 //Erstellt mit Matlab Skript: Einheit ist Frequenz/48kHz (DSP Samplingrate) Position ist auf das MIDI Frequenzbyte angepasst
 const PROGMEM uint32_t frequency[128] = {1429, 1514, 1604, 1699, 1800, 1907, 2021, 2141, 2268, 2403, 2546, 2697, 2858, 3028, 3208, 3398, 3600, 3815, 4041, 4282, 4536, 4806, 5092, 5395, 5715, 6055, 6415, 6797, 7201, 7629, 8083, 8563, 9072, 9612, 10184, 10789, 11431, 12110, 12830, 13593, 14402, 15258, 16165, 17127, 18145, 19224, 20367, 21578, 22861, 24221, 25661, 27187, 28803, 30516, 32331, 34253, 36290, 38448, 40734, 43156, 45722, 48441, 51322, 54373, 57607, 61032, 64661, 68506, 72580, 76896, 81468, 86312, 91445, 96882, 102643, 108747, 115213, 122064, 129322, 137012, 145160, 153791, 162936, 172625, 182890, 193765, 205287, 217494, 230426, 244128, 258645, 274025, 290319, 307582, 325872, 345249, 365779, 387529, 410573, 434987, 460853, 488256, 517290, 548049, 580638, 615165, 651744, 690499, 731558, 775059, 821146, 869974, 921705, 976513, 1034579, 1096099, 1161276, 1230329, 1303488, 1380998, 1463116, 1550118, 1642292, 1739948, 1843411, 1953026, 2069159, 2192197};
 
+
 byte playingTone[4];
 uint32_t playingDutyCycle[4];
 
+
+
+//Die folgenden Funktionen sind nur dazu gut die komische Ausgabe der Arduino MIDI Library wieder in normale MIDI Commands zurückzuändern die in der folgenden Klasse ausgewertet werden sollen.
+//Das sollte irgendwann mal geändert werden, also im idealfall die Library ändern oder selbst eine schreiben
+
+void readMidiInputOn(byte byte0, byte byte1, byte byte2) {
+  byte0--; //Wird von der Library 1 Indiziert übergeben, wir arbeiten aber hier mit einer 0- Indizierung
+
+  if (byte0 < 4) { //Nur Channels von 0-3 sollen verwendet werden
+    byte0 = byte0 | MIDI_CMD_NOTE_ON; //Note On Information wird zum Byte hinzugefügt
+    readMidi(byte0, byte1, byte2);
+    
+  }
+  
+}
+void readMidiInputOff(byte byte0, byte byte1, byte byte2) {
+  byte0--; //Wird von der Library 1 Indiziert übergeben, wir arbeiten aber hier mit einer 0- Indizierung
+
+  if (byte0 < 4) { //Nur Channels von 0-3 sollen verwendet werden
+    byte0 = byte0 | MIDI_CMD_NOTE_OFF; //Note Off Information wird zum Byte hinzugefügt
+    readMidi(byte0, byte1, byte2);
+    
+  }
+    
+}
+void readMidiPitchBend(byte byte0, int bend) {
+  byte0--; //Wird von der Library 1 Indiziert übergeben, wir arbeiten aber hier mit einer 0- Indizierung
+
+  if (byte0 < 4) { //Nur Channels von 0-3 sollen verwendet werden
+    byte0 = byte0 | MIDI_CMD_PITCH_BEND; //Note Off Information wird zum Byte hinzugefügt
+    bend += 8192;
+    byte byte1 = bend & 0xFF;
+    byte byte2 = (bend >> 8) & 0xFF;
+    readMidi(byte0, byte1, byte2); 
+  }
+  
+}
+
+void readMidiSysex(byte* byteEv, unsigned sizeEv){
+  Serial.println("Sysex");
+  for (int i=0; i< (sizeEv+1); i++){
+  Serial.println(byteEv[i]);
+  }
+}
+
+//Übernimmt das Mapping der einzelnen MIDI Channels auf die gewählten CoilTypes. Channels 0-3 kommen vom MIDI Input, Channels 4-7 sind die Channels 0-3 vom Player
+//Wird mit normalen MIDI Bytes aufgerufen
 void readMidi(byte byte0, byte byte1, byte byte2) {
   byte channel = byte0 & 0x0f;
 
@@ -52,29 +101,9 @@ void readMidi(byte byte0, byte byte1, byte byte2) {
   }
 }
 
-void readMidiInputOn(byte byte0, byte byte1, byte byte2) {
-  byte0--; //Wird von der Library 1 Indiziert übergeben, wir arbeiten aber hier mit einer 0- Indizierung
-
-  if (byte0 < 4) { //Nur Channels von 0-3 sollen verwendet werden
-    byte0 = byte0 | 0x90; //Note On Information wird zum Byte hinzugefügt
-    readMidi(byte0, byte1, byte2);
-  }
-}
-void readMidiInputOff(byte byte0, byte byte1, byte byte2) {
-  byte0--; //Wird von der Library 1 Indiziert übergeben, wir arbeiten aber hier mit einer 0- Indizierung
-
-  if (byte0 < 4) { //Nur Channels von 0-3 sollen verwendet werden
-    byte0 = byte0 | 0x80; //Note Off Information wird zum Byte hinzugefügt
-    readMidi(byte0, byte1, byte2);
-
-  }
-}
-
-
-
 void outputMidiToDSP(byte byte0, byte byte1, byte byte2) {
-
-  byte channel = byte0 & 0x0f;
+  
+  byte channel = byte0 & 0x0F; //Die letzten 4 Bit enthalten die Information über den relevanten Channel
   if (channel < 4) { //Sichergehen dass kein Oszillator angesprochen wird der physikalisch nicht existiert.
     if ((byte0 & 0xF0) == MIDI_CMD_NOTE_ON) { //Note on
       playingTone[channel] = 0b01111111 & byte1;
@@ -87,29 +116,72 @@ void outputMidiToDSP(byte byte0, byte byte1, byte byte2) {
       //War der alte Ansatz
       //playingDutyCycle[channel] =  pgm_read_dword(&frequency[playingTone[channel]])* getSettings().coilType[channel];
 
-      Serial.print(pgm_read_dword(&frequency[playingTone[channel]]));
-      Serial.print(" ");
-      Serial.println(playingDutyCycle[channel], HEX);
+      
+        
+       if (bend[channel] != 0x2000){    
 
+        if (bend[channel] < 0x2000) {
+          uint32_t newFrequency = getFrequency(playingTone[channel])-(((getFrequency(playingTone[channel])-getFrequency(playingTone[channel]-pitchBendRange))*(0x2000-bend[channel]))/0x2000);
+          
+          noteOn(channel, newFrequency , playingDutyCycle[channel]);
+        }
 
+        else if (bend[channel] < 0x4000) {
+          uint32_t newFrequency = getFrequency(playingTone[channel])+(((getFrequency(playingTone[channel]+pitchBendRange)-getFrequency(playingTone[channel]))*(bend[channel]-0x2000))/0x2000);
+          noteOn(channel, newFrequency , playingDutyCycle[channel]);
+        }
+       }
+      else{  
       noteOn(channel, getFrequency(playingTone[channel]) , playingDutyCycle[channel]);
-      //Serial.print("AN");
+      } //Serial.print("AN");
     }
 
     if ((byte0 & 0xF0) == MIDI_CMD_NOTE_OFF) { //Note off
       if (playingTone[channel] == (0b01111111 & byte1)) {
         noteOff(channel);
-        //Serial.print("AUS");
+        playingTone[channel] = 0;
+        //Serial.println("AUS");
       }
 
 
     }
 
-    if ((byte0 & 0xB0) && ((byte1 == 0x78) || (byte1 == 0x7B))) { // All Sounds off
-      noteOff(channel);
+    if ((byte0 & 0xF0) == MIDI_CMD_PITCH_BEND) { //Pitch Bend
+      int tempBend = (byte1 & 0xFF) | ((byte2  & 0xFF) << 8);
+       if(tempBend < 0x4000){
+        
+        bend[channel] = tempBend;
+       }
+      if (playingTone[channel] != 0) {         // Ändern der Frequenz nach Pitchwert um maximal pitchBendRange Halbtöne
+        
+        if (bend[channel] < 0x2000) {
+          uint32_t newFrequency = getFrequency(playingTone[channel])-(((getFrequency(playingTone[channel])-getFrequency(playingTone[channel]-pitchBendRange))*(0x2000-bend[channel]))/0x2000);
+          
+          noteOn(channel, newFrequency , playingDutyCycle[channel]);
+        }
+
+        else if (bend[channel] < 0x4000) {
+          uint32_t newFrequency = getFrequency(playingTone[channel])+(((getFrequency(playingTone[channel]+pitchBendRange)-getFrequency(playingTone[channel]))*(bend[channel]-0x2000))/0x2000);
+          noteOn(channel, newFrequency , playingDutyCycle[channel]);
+        
+        
+        
+        }
+      }
     }
   }
+
+
+  if (((byte0 & 0xF0) == MIDI_CMD_CONTROLLER_CHANGE) && ((byte1 == 0x78) || (byte1 == 0x7B))) { // All Sounds off
+    noteOff(channel);
+    playingTone[channel] = 0;
+//    Serial.print('\n');
+//    Serial.print("PANIKAUS");
+//    Serial.print("Byte1: ");
+//    Serial.print(byte1, HEX);
+  }
 }
+
 void noteOn(byte output, uint32_t freqIn, uint32_t dutyIn) {
 
   // uint32_t convDuty = map(dutyIn, 0, 100, 0x00, 0x800000);
@@ -161,6 +233,12 @@ void noteOff(byte output) {
   Wire.endTransmission(DSP_Adress);
 
 }
-uint32_t getFrequency(byte midiValue){
-return pgm_read_dword(&frequency[midiValue]);  
+uint32_t getFrequency(byte midiValue) {
+  return pgm_read_dword(&frequency[midiValue]);
+}
+
+void resetPitchBend(void){
+  for (int i=0; i<4; i++){
+  bend[i] = 0x2000;
+  }
 }

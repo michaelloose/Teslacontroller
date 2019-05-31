@@ -16,9 +16,7 @@ bool inputState[3] = {0, 0, 0}; //Die Anzeigen ob ein Eingang aktiv ist. Die sol
 #include "ui.hpp"
 
 
-//Speichern die aktuelle encoder Drehrichtung
-bool encplus = true;
-bool encminus = true;
+
 byte encpos = 0;
 byte encmax = 5;
 byte scrollpos = 0;
@@ -35,37 +33,7 @@ float dutyCycle;
 
 
 
-//Wird ständig gepolled. Prüft ob das Bit für die Benutzereingabe gesetzt wurde.
-void readUserInput() {
 
-  //Auslesen der Daten über i2c
-  Wire.requestFrom(pcf8575adress, 1);
-  byte incomingByte = Wire.read();
-
-  //Encoder in Ruhestellung?
-  if (incomingByte == 0b00000011) {
-    encplus = true;
-    encminus = true;
-  }
-  //Encoder im Uhrzeigersinn?
-  if ((incomingByte == 0b00000001) && encminus) {
-    encplus = false;
-    onEncoderChange(true);
-  }
-  //Encoder im Gegenuhrzeigersinn?
-  if ((incomingByte == 0b00000010) && encplus ) {
-    encminus = false;
-    onEncoderChange(false);
-  }
-  //Taste gedrückt?
-  if (incomingByte == 0b00000111) onButtonClicked(6);
-  if (incomingByte == 0b00001011) onButtonClicked(1);
-  if (incomingByte == 0b00010011) onButtonClicked(2);
-  if (incomingByte == 0b00100011) onButtonClicked(3);
-  if (incomingByte == 0b01000011) onButtonClicked(4);
-  if (incomingByte == 0b10000011) onButtonClicked(5);
-
-}
 
 //Aktuell angezeigtes Bild
 //0: Grundbild
@@ -323,7 +291,7 @@ void onButtonClicked(uint8_t pin) {
       //Speichern des aktuellen Wertes
       int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
       EEPROM.put(eeReadAddress, stor);
-      
+
       //Nach links gehen
       if (cursorPosition1 == 0) cursorPosition1 = 127;
       else cursorPosition1--;
@@ -334,11 +302,15 @@ void onButtonClicked(uint8_t pin) {
       //Speichern des aktuellen Wertes
       int eeReadAddress = eeDCAddress + (cursorPosition * 512) + (4 * cursorPosition1 );
       EEPROM.put(eeReadAddress, stor);
-      
+
       //Nach rechts gehen
       if (cursorPosition1 == 127) cursorPosition1 = 0;
       else cursorPosition1++;
 
+    }
+    if (pin == 4) {
+      //DutyCycle auf 50 % setzen
+      dutyCycle = 50;
     }
   }
 
@@ -546,8 +518,8 @@ void printHomeScreen(bool locinputState[3]) {
   else u8g2.drawCircle(xtop3 + width * 7 + 8, 6, 3, U8G2_DRAW_ALL);
 
   //Aktuell gewählte Datei
-  char charBuffer[12];
-  getFileList(getCurrentFile()).toCharArray(charBuffer, 12);
+  char charBuffer[13];
+  getFileList(getCurrentFile()).toCharArray(charBuffer, 13);
   u8g2.drawStr(xtop4, ytop + 9, charBuffer);
 
   //Playbutton
@@ -688,10 +660,10 @@ void printCoilSetupScreen2(void) {
   u8g2.drawStr(xcol1 + 3, 64, "back");
   u8g2.drawRFrame(xcol2, ybot, 29, height, 4);
   u8g2.drawStr(xcol2 + 3, 64, " <- ");
-
   u8g2.drawRFrame(xcol3, ybot, 29, height, 4);
   u8g2.drawStr(xcol3 + 3, 64, " -> ");
-
+  u8g2.drawRFrame(xcol4, ybot, 29, height, 4);
+  u8g2.drawStr(xcol4 + 3, 64, "50% ");
 
   //cursorPosition ist hier der zu editierende CoilType, cursorPosition1 der ausgewählte Wert dieses CoilTypes
 

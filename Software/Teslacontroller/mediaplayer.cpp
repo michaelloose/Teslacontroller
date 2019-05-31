@@ -20,6 +20,7 @@ byte currentFile = 0;
 boolean playing = false;
 int counter = 0;
 boolean fileSelected = 0;
+boolean initialized = 0;
 
 SdFat SD;
 MD_MIDIFile SMF;
@@ -28,7 +29,7 @@ const int mSDcard = 53; // Entsprechenden Pin einfügen (20-49)
 const int SDcard = 9; // Entsprechenden Pin einfügen   (20-49)
 // MISO 50; MOSI 51; SCK 52
 
-#define USE_MIDI 1
+
 
 int getNumberOfLoadedFiles(void){
   return counter;
@@ -97,7 +98,9 @@ readData:
   
 
   SPI.end();
-
+  initialized = 1;
+  resetPitchBend();
+  
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
 }
@@ -106,6 +109,7 @@ readData:
 void playFile(void) {
   playing = true;
   SMF.pause(false);
+  refreshScreen();
 }
 
 void pauseFile(void) {
@@ -113,6 +117,28 @@ void pauseFile(void) {
     playing = false;
     midiSilence();
     SMF.pause(true);
+    refreshScreen();
+    Serial.print("pause File29");
+  }
+}
+
+void resetFile(void){
+  pauseFile();
+  SMF.close();
+  fileSelected = 1;
+  loadMidiFile();
+  //Serial.print("Resdt File29");
+}
+
+void selectFile(byte number){
+  if (!initialized){
+    initializeSD();
+  }
+   if ((number < counter+1) && initialized){
+    currentFile = number;
+    resetFile();
+    refreshScreen();
+   
   }
 }
 

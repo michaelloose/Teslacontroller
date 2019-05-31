@@ -16,6 +16,41 @@
 
 set settings; //Variable zum Speichern der Einstellungen erstellen
 
+//Speichern die aktuelle encoder Drehrichtung
+bool encplus = true;
+bool encminus = true;
+
+//Wird, sofern der Interrupt ausgelöst wurde, im normalen Durchlauf ausgelöst. Liest den PCF aus und verarbeitet den Eingang.
+void readUserInput() {
+
+  //Auslesen der Daten über i2c
+  Wire.requestFrom(pcf8575adress, 1);
+  byte incomingByte = Wire.read();
+
+  //Encoder in Ruhestellung?
+  if (incomingByte == 0b00000011) {
+    encplus = true;
+    encminus = true;
+  }
+  //Encoder im Uhrzeigersinn?
+  if ((incomingByte == 0b00000001) && encminus) {
+    encplus = false;
+    onEncoderChange(true);
+  }
+  //Encoder im Gegenuhrzeigersinn?
+  if ((incomingByte == 0b00000010) && encplus ) {
+    encminus = false;
+    onEncoderChange(false);
+  }
+  //Taste gedrückt?
+  if (incomingByte & 0b00000100) onButtonClicked(6);
+  if (incomingByte & 0b00001000) onButtonClicked(1);
+  if (incomingByte & 0b00010000) onButtonClicked(2);
+  if (incomingByte & 0b00100000) onButtonClicked(3);
+  if (incomingByte & 0b01000000) onButtonClicked(4);
+  if (incomingByte & 0b10000000) onButtonClicked(5);
+
+}
 void loadSettings() {
   //Einstellungen aus dem EEprom laden
   EEPROM.get(eeSettingsAddress , settings); //Laden der Einstellungen aus dem EEprom

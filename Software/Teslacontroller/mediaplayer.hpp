@@ -1,6 +1,5 @@
-
-#ifndef mediaplayer.hpp
-#define mediaplayer.hpp
+#ifndef mediaplayer_hpp
+#define mediaplayer_hpp
 
 
 #include <Arduino.h>
@@ -34,7 +33,8 @@ void sysexCallback(sysex_event *pev);
 void midiSilence(void);
 void playFile(void);
 void pauseFile(void);
-
+void resetFile(void);
+void selectFile(byte);
 
 
 #endif

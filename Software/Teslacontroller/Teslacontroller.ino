@@ -15,9 +15,9 @@
 //Gettermethoden bekommen die Vorsilbe get, Settermethoden set
 //lokale Variablen, welche sich von globalen ableiten bekommen die vorsilbe loc
 
-#include<SPI.h>
+#include "lib/SPI/src/SPI.h"
 #include "ui.hpp"
-#include <MIDI.h>
+#include "lib/MIDI/src/MIDI.h"
 
 //MIDI Bibliothek: Schnittstelle deklarieren
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI3);
@@ -32,7 +32,7 @@ void setup(void) {
   //delay(3000);
 
   // Initialisierung der seriellen Schnittstellen
-  Serial.begin(9600); //Debugging Schnittstelle
+  Serial.begin(250000); //Debugging Schnittstelle
   // Serial3.begin(31250); //MIDI Schnittstelle
 
   loadSettings();
@@ -49,6 +49,13 @@ void setup(void) {
   //MIDI Bibliothek: Initialisieren
   MIDI3.setHandleNoteOn(readMidiInputOn);
   MIDI3.setHandleNoteOff(readMidiInputOff);
+  MIDI3.setHandlePitchBend(readMidiPitchBend);
+  MIDI3.setHandleContinue(playFile);
+  MIDI3.setHandleStart(playFile);
+  MIDI3.setHandleStop(pauseFile);
+  MIDI3.setHandleSystemExclusive(readMidiSysex);
+  MIDI3.setHandleSystemReset(resetFile);
+  MIDI3.setHandleSongSelect(selectFile);
   MIDI3.begin(MIDI_CHANNEL_OMNI);
 
 

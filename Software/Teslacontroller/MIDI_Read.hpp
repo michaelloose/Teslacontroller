@@ -1,5 +1,5 @@
-#ifndef MIDI_Read.hpp
-#define MIDI_Read.hpp
+#ifndef MIDI_Read_hpp
+#define MIDI_Read_hpp
 
 #include <arduino.h>
 #include <Wire.h>
@@ -26,13 +26,15 @@
 void readMidi(byte, byte, byte);
 void readMidiInputOn(byte, byte, byte);
 void readMidiInputOff(byte, byte, byte);
+void readMidiPitchBend(byte, int);
+void readMidiSysex(byte* , unsigned);
 
 
 uint32_t getFrequency(byte);
 void outputMidiToDSP(byte , byte, byte);
 void noteOff(byte);
 void noteOn(byte, uint32_t, uint32_t);
-
+void resetPitchBend(void);
 
 
 #endif

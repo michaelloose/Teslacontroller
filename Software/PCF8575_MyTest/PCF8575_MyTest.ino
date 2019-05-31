@@ -26,14 +26,17 @@ void setup() {
 }
 
 void loop() {
+//  Wire.requestFrom(pcf8575adress, 1);
+//  byte incomingByte = Wire.read();
+//  Serial.println(incomingByte, BIN);
   if (buttonPressed) {
     Wire.requestFrom(pcf8575adress, 1);
     byte incomingByte = Wire.read();
-
+    Serial.println(incomingByte, BIN);
 
     if (incomingByte == 0b00000011) {
-       encplus = true;
-       encminus = true;
+      encplus = true;
+      encminus = true;
     }
     if ((incomingByte == 0b00000001) && encminus) {
       Serial.println("Enc+");
@@ -43,12 +46,12 @@ void loop() {
       Serial.println("Enc-");
       encminus = false;
     }
-    if (incomingByte == 0b00000111) Serial.println("Enc Click");
-    if (incomingByte == 0b00001011) Serial.println("Button 1");
-    if (incomingByte == 0b00010011) Serial.println("Button 2");
-    if (incomingByte == 0b00100011) Serial.println("Button 3");
-    if (incomingByte == 0b01000011) Serial.println("Button 4");
-    if (incomingByte == 0b10000011) Serial.println("Home");
+    if (incomingByte & 0b00000100) Serial.println("Enc Click");
+    if (incomingByte & 0b00001000) Serial.println("Button 1");
+    if (incomingByte & 0b00010000) Serial.println("Button 2");
+    if (incomingByte & 0b00100000) Serial.println("Button 3");
+    if (incomingByte & 0b01000000) Serial.println("Button 4");
+    if (incomingByte & 0b10000000) Serial.println("Home");
     buttonPressed = 0;
   }
 
