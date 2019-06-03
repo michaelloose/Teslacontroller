@@ -31,9 +31,6 @@ const int SDcard = 9; // Entsprechenden Pin einfügen   (20-49)
 
 
 
-int getNumberOfLoadedFiles(void){
-  return counter;
-}
 
 
 int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
@@ -52,14 +49,7 @@ readData:
 
 
   fileList[0] = "NO DATA";
-  fileList[1] = "Demo 2";
-  fileList[2] = "Demo 3";
-  fileList[3] = "Demo 4";
-  fileList[4] = "Demo 5";
-  fileList[5] = "Demo 6";
-  fileList[6] = "Demo 7";
-  fileList[7] = "abcdefghijklmnopqrstuvwxyz0123456789";
-
+  
 
   root = SD.open("/");        //root-Verzeichnis als Standard
 
@@ -118,7 +108,16 @@ void pauseFile(void) {
     midiSilence();
     SMF.pause(true);
     refreshScreen();
-    Serial.print("pause File29");
+   
+  }
+}
+
+void playPauseFile (void){
+  if (playing){
+    pauseFile();
+  }
+  else  {
+    playFile();
   }
 }
 
@@ -127,7 +126,7 @@ void resetFile(void){
   SMF.close();
   fileSelected = 1;
   loadMidiFile();
-  //Serial.print("Resdt File29");
+ 
 }
 
 void selectFile(byte number){
@@ -162,11 +161,6 @@ void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
 
       //delay(2000);
     }
-
-   
-      
-      
-    
     }
     
   }
@@ -337,6 +331,11 @@ String getFileList(byte k) {
 byte getCurrentFile(void) {
   return currentFile;
 }
+
+int getNumberOfLoadedFiles(void){
+  return counter;
+}
+
 void setCurrentFile(byte i) {
   currentFile = i;
   Serial.print("\n");

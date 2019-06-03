@@ -5,7 +5,7 @@
 #include <Arduino.h>
 //#include <avr/pgmspace.h>
 #include "MIDI_Read.hpp"
-#include <SPI.h>
+#include "lib/SPI/src/SPI.h"
 #include <SdFat.h>
 #include <MD_MIDIFile.h>
 
@@ -33,6 +33,7 @@ void sysexCallback(sysex_event *pev);
 void midiSilence(void);
 void playFile(void);
 void pauseFile(void);
+void playPauseFile (void);
 void resetFile(void);
 void selectFile(byte);
 

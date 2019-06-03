@@ -51,8 +51,8 @@ void setup(void) {
   MIDI3.setHandleNoteOff(readMidiInputOff);
   MIDI3.setHandlePitchBend(readMidiPitchBend);
   MIDI3.setHandleContinue(playFile);
-  MIDI3.setHandleStart(playFile);
-  MIDI3.setHandleStop(pauseFile);
+  MIDI3.setHandleStart(playPauseFile);
+  MIDI3.setHandleStop(playPauseFile);
   MIDI3.setHandleSystemExclusive(readMidiSysex);
   MIDI3.setHandleSystemReset(resetFile);
   MIDI3.setHandleSongSelect(selectFile);
