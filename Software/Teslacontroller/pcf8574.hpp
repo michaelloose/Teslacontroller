@@ -10,7 +10,7 @@
 #include "ui.hpp"
 
 
-#define pcf8575adress 0x20 //I2c Adresse des Pin Expanders an dem die Knöpfe hängen
+#define pcf8575adress 0x20 //I2c Addresse des Pin Expanders an dem die Knöpfe hängen
 #define eeSettingsAddress 0 //Startadresse für das Auslesen vom EEPROM
 #define eeDCAddress 128 //Startadresse für das Auslesen vom EEPROM
 

@@ -6,7 +6,7 @@
 #include "pcf8574.hpp"
 #include <avr/pgmspace.h>
 
-#define DSP_Adress 0x34
+#define DSP_Address 0x34
 // midi commands
 #define MIDI_CMD_NOTE_OFF 0x80
 #define MIDI_CMD_NOTE_ON 0x90
@@ -28,7 +28,7 @@ void readMidiInputOn(byte, byte, byte);
 void readMidiInputOff(byte, byte, byte);
 void readMidiPitchBend(byte, int);
 void readMidiSysex(byte* , unsigned);
-
+void midiAutoDistribute(byte, byte, byte );
 
 uint32_t getFrequency(byte);
 void outputMidiToDSP(byte , byte, byte);
