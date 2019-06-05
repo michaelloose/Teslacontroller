@@ -176,12 +176,12 @@ void onEncoderChange(bool direction) {
   //CoilTypeSetup Untermenü
   if (currentScreen == 4) {
     if (direction) {
-      if (dutyCycle < 99.5) dutyCycle += 0.5;
+      if (dutyCycle < 49.9) dutyCycle += 0.1;
       else dutyCycle = 0;
     }
     else {
-      if (dutyCycle > 0) dutyCycle -= 0.5;
-      else dutyCycle = 99.5;
+      if (dutyCycle > 0) dutyCycle -= 0.1;
+      else dutyCycle = 50;
     }
 
   }
@@ -310,7 +310,7 @@ void onButtonClicked(uint8_t pin) {
     }
     if (pin == 4) {
       //DutyCycle auf 50 % setzen
-      dutyCycle = 50;
+      dutyCycle = 25;
     }
   }
 
@@ -663,7 +663,7 @@ void printCoilSetupScreen2(void) {
   u8g2.drawRFrame(xcol3, ybot, 29, height, 4);
   u8g2.drawStr(xcol3 + 3, 64, " -> ");
   u8g2.drawRFrame(xcol4, ybot, 29, height, 4);
-  u8g2.drawStr(xcol4 + 3, 64, "50% ");
+  u8g2.drawStr(xcol4 + 3, 64, "25% ");
 
   //cursorPosition ist hier der zu editierende CoilType, cursorPosition1 der ausgewählte Wert dieses CoilTypes
 
