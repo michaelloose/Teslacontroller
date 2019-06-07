@@ -26,6 +26,7 @@ void pollMediaPlayer(void);
 int initializeSD(void);
 void createfileList(File dir);
 String fileNameAsString(File activeFile);
+void printFileList (void);
 bool isMidi(char* filename);
 
 void midiCallback(midi_event *pev);

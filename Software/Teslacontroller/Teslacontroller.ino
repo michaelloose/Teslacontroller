@@ -19,6 +19,8 @@
 #include "ui.hpp"
 #include "lib/MIDI/src/MIDI.h"
 
+#define BAUDRATE 250000   //Auch in mediaplayer.cpp anpassen!!
+
 //MIDI Bibliothek: Schnittstelle deklarieren
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI3);
 
@@ -32,7 +34,7 @@ void setup(void) {
   //delay(3000);
 
   // Initialisierung der seriellen Schnittstellen
-  Serial.begin(250000); //Debugging Schnittstelle
+  Serial.begin(BAUDRATE); //Debugging Schnittstelle
   // Serial3.begin(31250); //MIDI Schnittstelle
 
   loadSettings();

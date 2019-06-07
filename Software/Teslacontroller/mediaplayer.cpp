@@ -11,6 +11,7 @@
 //////////////////////////////////////////////////////////////////////
 
 //SYNTAX AUSGABE: readMidi(byte0, byte1, byte2)
+#define BAUDRATE 250000
 
 #include "mediaplayer.hpp"
 
@@ -49,7 +50,7 @@ readData:
 
 
   fileList[0] = "NO DATA";
-  
+
 
   root = SD.open("/");        //root-Verzeichnis als Standard
 
@@ -85,12 +86,12 @@ readData:
   SMF.setMidiHandler(midiCallback);
   SMF.setSysexHandler(sysexCallback);
   SMF.close();  //Datei schließen, falls eine geöffnet war
-  
+
 
   SPI.end();
   initialized = 1;
   resetPitchBend();
-  
+
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
 }
@@ -103,17 +104,17 @@ void playFile(void) {
 }
 
 void pauseFile(void) {
-  if(playing){
+  if (playing) {
     playing = false;
     midiSilence();
     SMF.pause(true);
     refreshScreen();
-   
+
   }
 }
 
-void playPauseFile (void){
-  if (playing){
+void playPauseFile (void) {
+  if (playing) {
     pauseFile();
   }
   else  {
@@ -121,39 +122,39 @@ void playPauseFile (void){
   }
 }
 
-void resetFile(void){
+void resetFile(void) {
   pauseFile();
   SMF.close();
   fileSelected = 1;
   loadMidiFile();
- 
+
 }
 
-void selectFile(byte number){
-  if (!initialized){
+void selectFile(byte number) {
+  if (!initialized) {
     initializeSD();
   }
-   if ((number < counter+1) && initialized){
+  if ((number < counter + 1) && initialized) {
     currentFile = number;
     resetFile();
     refreshScreen();
-   
+
   }
 }
 
-void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
+void loadMidiFile(void) {       //einmalig bei Dateiauswahl ausführen
 
 
-  if((playing == true) && (fileSelected ==1)){
+  if ((playing == true) && (fileSelected == 1)) {
     fileSelected = 0;
-    
+
     int  err;
 
     Serial.print("\nFile: ");
     Serial.print(fileList[currentFile]);
     SMF.setFilename(fileList[currentFile].c_str());
     err = SMF.load();
-    
+
     if (err != -1)
     {
       Serial.print("\nSMF load Error ");
@@ -161,42 +162,42 @@ void loadMidiFile(void){        //einmalig bei Dateiauswahl ausführen
 
       //delay(2000);
     }
-    }
-    
   }
-  
 
-bool playMidiFile(void){            // Midi Datei abspielen
-  if(!getUserInput()){              
-  if(playing){
+}
 
 
-  if (!SMF.isEOF())
-      { 
-        
+bool playMidiFile(void) {           // Midi Datei abspielen
+  if (!getUserInput()) {
+    if (playing) {
+
+
+      if (!SMF.isEOF())
+      {
+
         if (SMF.getNextEvent())
           ;
 
       }
-   else{
-    SMF.close();
-    midiSilence();
-    playing = false;
-    
-//    currentFile++;
-    fileSelected = 1;
-    
-    SPI.end();
-    return 1;               //Rückgabe zur Bildschirmaktualisierung beim Ende der Datei
-   }
-   
-   SPI.end();
-   return 0;
+      else {
+        SMF.close();
+        midiSilence();
+        playing = false;
+
+        //    currentFile++;
+        fileSelected = 1;
+
+        SPI.end();
+        return 1;               //Rückgabe zur Bildschirmaktualisierung beim Ende der Datei
+      }
+
+      SPI.end();
+      return 0;
     }
-   }
+  }
   return 0;
-  
-  
+
+
 }
 
 
@@ -218,7 +219,7 @@ void createfileList(File dir) {    //Dateinamen ins Array schreiben
       if ( isMidi(fileNameAsString(entry).c_str()) ) {
 
         fileList[counter] = fileNameAsString(entry);
-        
+
         counter++;
 
       }
@@ -243,6 +244,39 @@ String fileNameAsString(File activeFile) {         // Dateinamen als String
   return fn;
 }
 
+void printFileList (void) {         // Druckt Songliste aus ;)
+  Serial.begin(19200);
+  byte underline = 0b10000000;
+  byte doubleHeight = 0b00010000;
+  byte doubleWidth = 0b00100000;
+  byte resetPrintMode = 0b00000000;
+  int setPrintMode[] = {27, 33};
+  int lineFeed = 10;
+  char number[3];
+
+  if (!initialized) {         
+    initializeSD();
+  }
+  for (int i = 0; i < 2; i++)
+  {
+    Serial.write(setPrintMode[i]);
+  }
+  Serial.write(doubleHeight | doubleWidth);                   // Ungetestet
+
+  Serial.write("Song List:");
+  Serial.write(resetPrintMode);
+
+  for (int i = 0; i < counter + 1; i++) {
+    itoa(i, number, 10);
+    Serial.write(number);
+    Serial.write(".");
+    Serial.write('\t');
+    Serial.write(fileList[i].c_str());
+    Serial.write(lineFeed);
+
+  }
+  Serial.begin(BAUDRATE);
+}
 
 
 bool isMidi(char* filename) {
@@ -267,22 +301,22 @@ void midiCallback(midi_event *pev)
 // thru the midi communications interface.
 // This callback is set up in the setup() function.
 {
-  if((pev->channel) < 4){ 
+  if ((pev->channel) < 4) {
 
-  if(false){
-  Serial.print("\n");
-  Serial.print(" T");
-  Serial.print(pev->track);
-  Serial.print(":  Ch ");
-  Serial.print(pev->channel + 1);
-  Serial.print(" Data ");
-  for (uint8_t i = 0; i < pev->size; i++)
-  {
-    Serial.print(pev->data[i], HEX);
-    Serial.print(' ');
-  }
-  }
-  readMidi(pev->data[0] | pev->channel+4, pev->data[1], pev->data[2]);
+    if (false) {
+      Serial.print("\n");
+      Serial.print(" T");
+      Serial.print(pev->track);
+      Serial.print(":  Ch ");
+      Serial.print(pev->channel + 1);
+      Serial.print(" Data ");
+      for (uint8_t i = 0; i < pev->size; i++)
+      {
+        Serial.print(pev->data[i], HEX);
+        Serial.print(' ');
+      }
+    }
+    readMidi(pev->data[0] | pev->channel + 4, pev->data[1], pev->data[2]);
   }
 }
 
@@ -332,7 +366,7 @@ byte getCurrentFile(void) {
   return currentFile;
 }
 
-int getNumberOfLoadedFiles(void){
+int getNumberOfLoadedFiles(void) {
   return counter;
 }
 
@@ -346,6 +380,6 @@ bool getPlayingState(void) {
   return playing;
 }
 
-void setFileSelected(void){
+void setFileSelected(void) {
   fileSelected = 1;
 }
