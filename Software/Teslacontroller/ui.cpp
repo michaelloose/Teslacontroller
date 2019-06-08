@@ -93,7 +93,7 @@ void onEncoderChange(bool direction) {
 
 
 
-      if (direction) {
+      if (!direction) {
         if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
       }
@@ -104,7 +104,7 @@ void onEncoderChange(bool direction) {
     }
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {
-      if (direction) {
+      if (!direction) {
 
         if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 5) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
@@ -121,7 +121,7 @@ void onEncoderChange(bool direction) {
   //MENÜ
   //Cursor soll nur von oben bis unten laufen
   if (currentScreen == 1 || currentScreen == 3) {
-    if (direction) {
+    if (!direction) {
       if (encpos < encmax) encpos++;
       else encpos = 0;
     }
@@ -134,7 +134,7 @@ void onEncoderChange(bool direction) {
   // Dateiliste kann gescrolled werden
   if (currentScreen == 2) {
     //Drehung im Uhrzeigersinn
-    if (direction) {
+    if (!direction) {
       //Oberhalb des unteren Displayendes
       if (encpos < encmax && encpos < (getNumberOfLoadedFiles() - 1)) encpos++;
       //In der letzten Zeile
@@ -175,7 +175,7 @@ void onEncoderChange(bool direction) {
 
   //CoilTypeSetup Untermenü
   if (currentScreen == 4) {
-    if (direction) {
+    if (!direction) {
       if (dutyCycle < 49.9) dutyCycle += 0.1;
       else dutyCycle = 0;
     }

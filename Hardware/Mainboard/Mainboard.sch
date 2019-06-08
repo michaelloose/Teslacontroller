@@ -24815,9 +24815,9 @@ Source: Comchip CGRM4001-G.pdf</description>
 <attribute name="NAME" x="610.87" y="180.975" size="1.778" layer="95"/>
 <attribute name="VALUE" x="610.87" y="170.18" size="1.778" layer="96"/>
 </instance>
-<instance part="D1" gate="G$1" x="480.06" y="35.56">
-<attribute name="NAME" x="482.6" y="36.0426" size="1.778" layer="95"/>
-<attribute name="VALUE" x="482.6" y="33.2486" size="1.778" layer="96"/>
+<instance part="D1" gate="G$1" x="480.06" y="35.56" rot="R180">
+<attribute name="NAME" x="477.52" y="35.0774" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="477.52" y="37.8714" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="D2" gate="G$1" x="675.64" y="322.58" rot="R90">
 <attribute name="NAME" x="675.1574" y="325.12" size="1.778" layer="95" rot="R90"/>
@@ -26416,22 +26416,22 @@ Source: Comchip CGRM4001-G.pdf</description>
 <wire x1="459.74" y1="35.56" x2="474.98" y2="35.56" width="0.1524" layer="91"/>
 <pinref part="R12" gate="G$1" pin="1"/>
 <wire x1="474.98" y1="35.56" x2="474.98" y2="38.1" width="0.1524" layer="91"/>
+<pinref part="D1" gate="G$1" pin="C"/>
+<wire x1="477.52" y1="35.56" x2="474.98" y2="35.56" width="0.1524" layer="91"/>
 <junction x="474.98" y="35.56"/>
-<wire x1="474.98" y1="35.56" x2="477.52" y2="35.56" width="0.1524" layer="91"/>
-<pinref part="D1" gate="G$1" pin="A"/>
 </segment>
 </net>
 <net name="N$16" class="0">
 <segment>
 <pinref part="OK1" gate="G$1" pin="C"/>
-<wire x1="482.6" y1="35.56" x2="485.14" y2="35.56" width="0.1524" layer="91"/>
 <wire x1="485.14" y1="35.56" x2="485.14" y2="50.8" width="0.1524" layer="91"/>
 <pinref part="X8" gate="G$1" pin="5"/>
 <wire x1="492.76" y1="25.4" x2="497.84" y2="25.4" width="0.1524" layer="91"/>
 <wire x1="497.84" y1="25.4" x2="497.84" y2="35.56" width="0.1524" layer="91"/>
 <wire x1="497.84" y1="35.56" x2="485.14" y2="35.56" width="0.1524" layer="91"/>
+<pinref part="D1" gate="G$1" pin="A"/>
+<wire x1="485.14" y1="35.56" x2="482.6" y2="35.56" width="0.1524" layer="91"/>
 <junction x="485.14" y="35.56"/>
-<pinref part="D1" gate="G$1" pin="C"/>
 </segment>
 </net>
 <net name="N$17" class="0">
