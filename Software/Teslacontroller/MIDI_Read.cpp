@@ -12,8 +12,8 @@
 
 #include"MIDI_Read.hpp"
 
-byte MIDIAD_Channel = 15; //Kann verändert werden (Muss zwischen 3 und 15 liegen)
-byte pitchBendRange = 2; //In Halbtönen
+//byte MIDIAD_Channel = 15; //Kann verändert werden (Muss zwischen 3 und 15 liegen)
+//byte pitchBendRange = 2; //In Halbtönen
 
 int bend[4] = {0x2000, 0x2000, 0x2000, 0x2000};
 
@@ -47,7 +47,7 @@ void readMidiInputOn(byte byte0, byte byte1, byte byte2) {
   }
 
   //Wenns in den MIDIAD Channel eingegeben wird solls an die entsprechende Funktion gehen
-  else if ( byte0 == MIDIAD_Channel) {
+  else if ( byte0 == getSettings().MIDIADChannel) {
     byte0 = byte0 | MIDI_CMD_NOTE_ON; //Note On Information wird zum Byte hinzugefügt
     midiAutoDistribute(byte0, byte1, byte2);
   }
@@ -62,7 +62,7 @@ void readMidiInputOff(byte byte0, byte byte1, byte byte2) {
 
   }
   //Wenns in den MIDIAD Channel eingegeben wird solls an die entsprechende Funktion gehen
-  else if ( byte0 == MIDIAD_Channel) {
+  else if ( byte0 == getSettings().MIDIADChannel) {
     byte0 = byte0 | MIDI_CMD_NOTE_OFF; //Note Off Information wird zum Byte hinzugefügt
     midiAutoDistribute(byte0, byte1, byte2);
   }
@@ -80,7 +80,7 @@ void readMidiPitchBend(byte byte0, int bend) {
     readMidi(byte0, byte1, byte2);
   }
   //Wenns in den MIDIAD Channel eingegeben wird solls an die entsprechende Funktion gehen
-  else if ( byte0 == MIDIAD_Channel) {
+  else if ( byte0 == getSettings().MIDIADChannel) {
     byte0 = byte0 | MIDI_CMD_PITCH_BEND; //Note Off Information wird zum Byte hinzugefügt
     bend += 8192;
     byte byte1 = bend & 0xFF;
@@ -126,6 +126,7 @@ void readMidi(byte byte0, byte byte1, byte byte2) {
     }
   }
 }
+
 
 void midiAutoDistribute(byte byte0, byte byte1, byte byte2) {
 
@@ -189,13 +190,13 @@ void outputMidiToDSP(byte byte0, byte byte1, byte byte2) {
       if (bend[channel] != 0x2000) {
 
         if (bend[channel] < 0x2000) {
-          uint32_t newFrequency = getFrequency(playingTone[channel]) - (((getFrequency(playingTone[channel]) - getFrequency(playingTone[channel] - pitchBendRange)) * (0x2000 - bend[channel])) / 0x2000);
+          uint32_t newFrequency = getFrequency(playingTone[channel]) - (((getFrequency(playingTone[channel]) - getFrequency(playingTone[channel] - getSettings().pitchBendRange)) * (0x2000 - bend[channel])) / 0x2000);
 
           noteOn(channel, newFrequency , playingDutyCycle[channel]);
         }
 
         else if (bend[channel] < 0x4000) {
-          uint32_t newFrequency = getFrequency(playingTone[channel]) + (((getFrequency(playingTone[channel] + pitchBendRange) - getFrequency(playingTone[channel])) * (bend[channel] - 0x2000)) / 0x2000);
+          uint32_t newFrequency = getFrequency(playingTone[channel]) + (((getFrequency(playingTone[channel] + getSettings().pitchBendRange) - getFrequency(playingTone[channel])) * (bend[channel] - 0x2000)) / 0x2000);
           noteOn(channel, newFrequency , playingDutyCycle[channel]);
         }
       }
@@ -226,13 +227,13 @@ void outputMidiToDSP(byte byte0, byte byte1, byte byte2) {
       if (playingTone[channel] != 0) {
 
         if (bend[channel] < 0x2000) {
-          uint32_t newFrequency = getFrequency(playingTone[channel]) - (((getFrequency(playingTone[channel]) - getFrequency(playingTone[channel] - pitchBendRange)) * (0x2000 - bend[channel])) / 0x2000);
+          uint32_t newFrequency = getFrequency(playingTone[channel]) - (((getFrequency(playingTone[channel]) - getFrequency(playingTone[channel] - getSettings().pitchBendRange)) * (0x2000 - bend[channel])) / 0x2000);
 
           noteOn(channel, newFrequency , playingDutyCycle[channel]);
         }
 
         else if (bend[channel] < 0x4000) {
-          uint32_t newFrequency = getFrequency(playingTone[channel]) + (((getFrequency(playingTone[channel] + pitchBendRange) - getFrequency(playingTone[channel])) * (bend[channel] - 0x2000)) / 0x2000);
+          uint32_t newFrequency = getFrequency(playingTone[channel]) + (((getFrequency(playingTone[channel] + getSettings().pitchBendRange) - getFrequency(playingTone[channel])) * (bend[channel] - 0x2000)) / 0x2000);
           noteOn(channel, newFrequency , playingDutyCycle[channel]);
         }
       }
@@ -312,6 +313,16 @@ void noteOff(byte output) {
 
 }
 
+void initialiseDSP(void){
+ //Zuerst ein NOTE OFF auf allen Kanälen senden
+for(byte i=0; i<3; i++){
+noteOff(i); 
+}
+//Danach den Outpue Enable Pin hoch ziehen
+pinMode(44, OUTPUT);
+digitalWrite(44, HIGH);
+  
+}
 
 uint32_t getFrequency(byte midiValue) {
   return pgm_read_dword(&frequency[midiValue]);

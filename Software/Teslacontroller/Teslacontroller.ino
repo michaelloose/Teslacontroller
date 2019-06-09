@@ -15,6 +15,7 @@
 //Gettermethoden bekommen die Vorsilbe get, Settermethoden set
 //lokale Variablen, welche sich von globalen ableiten bekommen die vorsilbe loc
 
+
 #include "lib/SPI/src/SPI.h"
 #include "ui.hpp"
 #include "lib/MIDI/src/MIDI.h"
@@ -26,25 +27,23 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI3);
 
 void setup(void) {
 
-  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   //Display initialisieren und Startbild anzeigen
   initialiseDisplay();
+  loadSettings();
   printStartScreen();
-  //Etwas warten damit man den schönen Startbildschirm bewundern kann :)
-  //delay(3000);
 
   // Initialisierung der seriellen Schnittstellen
   Serial.begin(BAUDRATE); //Debugging Schnittstelle
   // Serial3.begin(31250); //MIDI Schnittstelle
 
-  loadSettings();
+
 
   // PCF8575 für Benutzereingaben initialisieren
   initialiseButtons();
 
   //Default CoilType wiederherstellen
   for (int i = 0; i < 128; i++) {
-    EEPROM.put(eeDCAddress+(i*4), 0x400000);
+    EEPROM.put(eeDCAddress + (i * 4), 0x400000);
   }
 
 
@@ -60,7 +59,9 @@ void setup(void) {
   MIDI3.setHandleSongSelect(selectFile);
   MIDI3.begin(MIDI_CHANNEL_OMNI);
 
-
+  //Etwas warten damit man den schönen Startbildschirm bewundern kann :)
+  delay(3000);
+  initialiseDSP();
   refreshScreen();
 
 }

@@ -6,7 +6,6 @@
 #include <EEPROM.h>
 #include <Wire.h>
 
-//Das hier verursachte den Fehler                                                                                               Fehler behoben!!
 #include "ui.hpp"
 
 
@@ -24,8 +23,11 @@ bool getUserInput(void);
 struct set {
   int source[4];
   int coilType[4];
+  byte pitchBendRange;
+  byte MIDIADChannel;
+  bool autoplay;
+  bool serialDebugging;
 };
-
 
 
 set getSettings(void);

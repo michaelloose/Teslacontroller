@@ -1,11 +1,13 @@
 #ifndef ui_hpp
 #define ui_hpp
 
+#define softwareVersion "Version 1.0"
+
+
 
 #include <U8g2lib.h>
 #include "lib/SPI/src/SPI.h"
-
-
+#include "pcf8574.hpp"
 #include "mediaplayer.hpp"
 
 #define xcol1 0
@@ -26,11 +28,11 @@
 #define xtext 10
 #define xcursor 0
 
+
 //Methoden zum Einlesen der Knöpfe
 
 void readUserInput(void);
 bool getButtonPressed(void);
-byte getCurrentScreen(void);
 
 void onButtonClicked(uint8_t);
 void onEncoderChange(bool);
@@ -42,11 +44,12 @@ void printStartScreen(void);
 
 void printHomeScreen(bool[3]);
 void printMenuScreen(void);
+void printNotificationScreen(byte);
 void printPlayerFileScreen(void);
 void printCoilSetupScreen(void);
 void printCoilSetupScreen2(void);
 void printCoilTestScreen(void);
-void printSelfTestScreen(void);
+void printUtilityScreen(void);
 void printCreditsScreen(void);
 
 

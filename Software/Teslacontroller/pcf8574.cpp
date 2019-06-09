@@ -80,6 +80,7 @@ void loadSettings() {
 void saveSettings() {
   EEPROM.put(eeSettingsAddress , settings);
   Serial.print("Saving Complete");
+  printNotificationScreen(1);
 }
 
 set getSettings(void) {
