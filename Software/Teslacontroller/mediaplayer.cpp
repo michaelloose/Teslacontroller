@@ -26,8 +26,8 @@ boolean initialized = 0;
 SdFat SD;
 MD_MIDIFile SMF;
 File root;
-const int mSDcard = 9; // Entsprechenden Pin einfügen (20-49)
-const int SDcard = 53; // Entsprechenden Pin einfügen   (20-49)
+const int mSDcard = 53; // Entsprechenden Pin einfügen (20-49)
+const int SDcard = 9; // Entsprechenden Pin einfügen   (20-49)
 // MISO 50; MOSI 51; SCK 52
 
 
@@ -41,7 +41,7 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
 
   if (!SD.begin(SDslot)) {
     SDslot = mSDcard;
-
+    SPI.end();
     if (!SD.begin(SDslot)) {
       fehlercode = 1;
     }
@@ -51,10 +51,11 @@ readData:
 
   fileList[0] = "NO DATA";
 
+  if (fehlercode == -1) {
+    root = SD.open("/");        //root-Verzeichnis als Standard
 
-  root = SD.open("/");        //root-Verzeichnis als Standard
-
-  createfileList(root);
+    createfileList(root);
+  }
 
   Serial.println("Ab jetzt fileList[] \n");      // Kontrolle ob richtig eingelesen wurde
   for (int i = 0; i < counter; i++) {
@@ -70,12 +71,13 @@ readData:
 
     if (!SD.begin(SDslot)) {                    //MIcroSD nicht vorhanden -> Fehler 2
       fehlercode = 2;
+      SPI.end();
     }
 
     goto readData;
   }
 
-  if ((counter == 0)  && (SDslot == mSDcard)) {     // Wenn (auch) nix auf der MicroSD ist: Fehler 2
+  if ((counter == 0)  && (SDslot == mSDcard) && (fehlercode == -1)) {     // Wenn (auch) nix auf der MicroSD ist: Fehler 2
     Serial.println(fileList[counter]);
 
     fehlercode = 2;
@@ -86,11 +88,21 @@ readData:
   SMF.setMidiHandler(midiCallback);
   SMF.setSysexHandler(sysexCallback);
   SMF.close();  //Datei schließen, falls eine geöffnet war
-
-
   SPI.end();
-  initialized = 1;
+
+  if ( fehlercode == -1) {
+    initialized = 1;
+  }
+  else if ( fehlercode == 1) {
+    printNotificationScreen(2);
+  }
+  else if ( fehlercode == 2) {
+    printNotificationScreen(3);
+  }
+
   resetPitchBend();
+  Serial.print(fehlercode);
+
 
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
@@ -184,7 +196,10 @@ bool playMidiFile(void) {           // Midi Datei abspielen
         midiSilence();
         playing = false;
 
-        //    currentFile++;
+        if (getSettings().autoplay) {
+          currentFile++;
+          playFile();
+        }
         fileSelected = 1;
 
         SPI.end();
@@ -244,8 +259,8 @@ String fileNameAsString(File activeFile) {         // Dateinamen als String
   return fn;
 }
 
-void printFileList (void) {         // Druckt Songliste aus ;)
-  Serial.begin(19200);
+void printFileList(void) {         // Druckt Songliste aus ;)
+
   byte underline = 0b10000000;
   byte doubleHeight = 0b00010000;
   byte doubleWidth = 0b00100000;
@@ -253,30 +268,44 @@ void printFileList (void) {         // Druckt Songliste aus ;)
   int setPrintMode[] = {27, 33};
   int lineFeed = 10;
   char number[3];
+  int fehlerSD;
 
-  if (!initialized) {         
-    initializeSD();
+  if (!initialized) {
+    fehlerSD = initializeSD();
   }
-  for (int i = 0; i < 2; i++)
-  {
-    Serial.write(setPrintMode[i]);
-  }
-  Serial.write(doubleHeight | doubleWidth);                   // Ungetestet
+  if ((fehlerSD == -1) || (initialized == 1)) {
 
-  Serial.write("Song List:");
-  Serial.write(resetPrintMode);
+    Serial.end();
+    Serial.begin(19200);
+    for (int i = 0; i < 2; i++)
+    {
+      Serial.write(setPrintMode[i]);
+    }
+    Serial.write(doubleHeight | doubleWidth);                   // Ungetestet
 
-  for (int i = 0; i < counter + 1; i++) {
-    itoa(i, number, 10);
-    Serial.write(number);
-    Serial.write(".");
-    Serial.write('\t');
-    Serial.write(fileList[i].c_str());
+    Serial.write("Song List:");
     Serial.write(lineFeed);
+    for (int i = 0; i < 2; i++)
+    {
+      Serial.write(setPrintMode[i]);
+    }
+    Serial.write(resetPrintMode);
 
+    for (int i = 0; i < counter; i++) {
+      itoa(i + 1, number, 10);
+      Serial.write(number);
+      Serial.print(". \t");
+      Serial.println(fileList[i]);
+    }
+
+    for ( int k = 0; k < 5;  k++) {
+      Serial.write(lineFeed);
+    }
+    Serial.end();
+    Serial.begin(BAUDRATE);
   }
-  Serial.begin(BAUDRATE);
 }
+
 
 
 bool isMidi(char* filename) {

@@ -94,7 +94,7 @@ void onEncoderChange(bool dir) {
 
 
 
-      if (dir) {
+      if (!dir) {
         if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
       }
@@ -105,7 +105,7 @@ void onEncoderChange(bool dir) {
     }
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {
-      if (dir) {
+      if (!dir) {
 
         if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 5) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
@@ -121,7 +121,7 @@ void onEncoderChange(bool dir) {
   //MENÜ
   //Cursor soll nur von oben bis unten laufen
   else if (currentScreen == 1) {
-    if (dir) {
+    if (!dir) {
       if (encpos < encmax) encpos++;
       else encpos = 0;
     }
@@ -136,7 +136,7 @@ void onEncoderChange(bool dir) {
   // Dateiliste kann gescrolled werden
   else if (currentScreen == 2) {
     //Drehung im Uhrzeigersinn
-    if (dir) {
+    if (!dir) {
       //Oberhalb des unteren Displayendes
       if (encpos < encmax && encpos < (getNumberOfLoadedFiles() - 1)) encpos++;
       //In der letzten Zeile
@@ -176,7 +176,7 @@ void onEncoderChange(bool dir) {
   //Coil Setup
   //Cursor soll nur von oben bis unten laufen
   else if (currentScreen == 3) {
-    if (dir) {
+    if (!dir) {
       if (encpos < encmax) encpos++;
       else encpos = 0;
     }
@@ -189,7 +189,7 @@ void onEncoderChange(bool dir) {
 
   //CoilTypeSetup Untermenü
   else if (currentScreen == 4) {
-    if (dir) {
+    if (!dir) {
       if (dutyCycle < 49.9) dutyCycle += 0.1;
       else dutyCycle = 0;
     }
@@ -203,7 +203,7 @@ void onEncoderChange(bool dir) {
   //Cursor soll nur von oben bis unten laufen
   else if (currentScreen == 6) {
 
-    if (dir) {
+    if (!dir) {
       if (encpos < encmax) encpos++;
       else encpos = 0;
     }
@@ -320,24 +320,29 @@ void onButtonClicked(uint8_t pin) {
         //Gerade "Player File" gewählt?
         if (encpos == 1) {
           //SD ohne Fehler gelesen
-          switch (initializeSD()) {
-            case -1:
-              currentScreen = 2;
-              break;
-
-            //Keine Karte
-            case 1:
-              printNotificationScreen(2);
-              break;
-            //Karte Leer
-            case 2:
-              printNotificationScreen(3);
-              break;
-            //Anderer Fehler
-            default:
-              printNotificationScreen(0);
-              break;
+          if(initializeSD()== -1){
+            currentScreen = 2;
           }
+//          switch (initializeSD()) {
+//            case -1:
+//              currentScreen = 2;
+//              break;
+//
+//            //Keine Karte
+//            case 1:
+//              printNotificationScreen(2);
+//              Serial.print("Fehler 1");
+//              break;
+//            //Karte Leer
+//            case 2:
+//              printNotificationScreen(3);
+//              break;
+//            //Anderer Fehler
+//            default:
+//              printNotificationScreen(0);
+//              break;
+//          }
+          
         }
         //Gerade "Coil Setup" gewählt?
         if (encpos == 2) {
@@ -477,7 +482,7 @@ void onButtonClicked(uint8_t pin) {
         }
         //Print File List
         else if (encpos == 4) {
-          //Hier Druckfunktion aufrufen
+          printFileList();
         }
 
         setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben

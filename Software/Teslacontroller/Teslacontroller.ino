@@ -61,6 +61,7 @@ void setup(void) {
 
   //Etwas warten damit man den schönen Startbildschirm bewundern kann :)
   delay(3000);
+
   initialiseDSP();
   refreshScreen();
 
@@ -73,7 +74,6 @@ void loop(void) {
   }
   loadMidiFile();
   if (playMidiFile()) refreshScreen();
-
 
   //MIDI Bibliothek: Auslesen
   MIDI3.read();

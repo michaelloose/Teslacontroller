@@ -1,0 +1,30 @@
+0 PulseAlg1 O_C54_A0_P1_out Link2
+1 PulseAlg2 O_C64_A0_P1_out Link3
+2 PulseAlg3 O_C69_A0_P1_out Link24
+3 PulseAlg4 O_C73_A0_P1_out Link25
+4 ICSigma100In1 O_C42_A0_P1_out Link5 O_C42_A0_P2_out Link4
+5 EQ1940DualS1 I_C82_A0_P1_in Link5 I_C82_A0_P2_in Link4 O_C82_A0_P3_out Link6 O_C82_A0_P4_out Link7
+6 ICSigma100Out3 I_C60_A0_P1_in Link24
+7 ICSigma100Out4 I_C62_A0_P1_in Link25
+8 SingleCtrlSplitSlew1 I_C53_A0_P1_in Link6 O_C53_A0_P2_out Link8 O_C53_A0_P3_out Link9
+9 SingleCtrlSplitSlew2 I_C67_A0_P1_in Link7 O_C67_A0_P2_out Link10 O_C67_A0_P3_out Link11
+10 HardClipNewAlg1 I_C20_A0_P1_in Link8 O_C20_A0_P2_out Link16
+11 HardClipNewAlg2 I_C26_A0_P1_in Link9 O_C26_A0_P2_out Link13
+12 HardClipNewAlg3 I_C32_A0_P1_in Link10 O_C32_A0_P2_out Link19
+13 HardClipNewAlg4 I_C39_A0_P1_in Link11 O_C39_A0_P2_out Link12
+14 MultCtrlDelGrowAlg2 I_C106_A0_P1_in Link12 O_C106_A0_P2_out Link21
+15 MultCtrlDelGrowAlg1 I_C103_A0_P1_in Link13 O_C103_A0_P2_out Link14
+16 SingleCtrlSplit1 I_C147_A0_P1_in Link16 O_C147_A0_P2_out Link18 O_C147_A0_P3_out Link17
+17 SingleCtrlSplit2 I_C161_A0_P1_in Link19 O_C161_A0_P2_out Link23 O_C161_A0_P3_out Link20
+18 OneShotRiseResetFixedAlg1 I_C137_A0_P1_in Link17 I_C137_A0_P2_in Link14 O_C137_A0_P3_out Link15
+19 OneShotRiseResetFixedAlg2 I_C157_A0_P1_in Link20 I_C157_A0_P2_in Link21 O_C157_A0_P3_out Link22
+20 StateMachAlg1 I_C124_A0_P1_in Link15 I_C124_A0_P2_in Link18 O_C124_A0_P3_out Link27
+21 StateMachAlg2 I_C128_A0_P1_in Link22 I_C128_A0_P2_in Link23 O_C128_A0_P3_out Link26
+22 EQ1940Invert2 I_C194_A0_P1_in Link26 O_C194_A0_P2_out Link29
+23 EQ1940Invert1 I_C191_A0_P1_in Link27 O_C191_A0_P2_out Link28
+24 SingleCtrlSplit3 I_C179_A0_P1_in Link28 O_C179_A0_P2_out Link30 O_C179_A0_P3_out Link31
+25 SingleCtrlSplit4 I_C183_A0_P1_in Link29 O_C183_A0_P2_out Link32 O_C183_A0_P3_out Link33
+26 ThreeChanXMixer1940Alg1 I_C0_A0_P1_in Link2 I_C0_A0_P2_in Link30 I_C0_A0_P3_in Link32 O_C0_A0_P4_out Link1
+27 ThreeChanXMixer1940Alg2 I_C5_A0_P1_in Link3 I_C5_A0_P2_in Link31 I_C5_A0_P3_in Link33 O_C5_A0_P4_out Link0
+28 ICSigma100Out2 I_C58_A0_P1_in Link0
+29 ICSigma100Out1 I_C36_A0_P1_in Link1
