@@ -32,6 +32,7 @@ void midiAutoDistribute(byte, byte, byte );
 
 uint32_t getFrequency(byte);
 void initialiseDSP(void);
+void setDSPInput(void);
 void outputMidiToDSP(byte , byte, byte);
 void noteOff(byte);
 void noteOn(byte, uint32_t, uint32_t);

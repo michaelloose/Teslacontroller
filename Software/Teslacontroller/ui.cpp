@@ -102,6 +102,7 @@ void onEncoderChange(bool dir) {
         if (locSettings.source[((cursorPosition / 10) % 10) - 1] > 0) locSettings.source[((cursorPosition / 10) % 10) - 1]--;
         else locSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
       }
+      setDSPInput();    //Beim ändern des Eingangs des DSP Quelle anpassen
     }
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {

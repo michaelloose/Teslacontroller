@@ -44,12 +44,13 @@ int initializeSD(void) {      // SDkarte Initialisieren und Dateiliste erstellen
     SPI.end();
     if (!SD.begin(SDslot)) {
       fehlercode = 1;
+      
     }
   }
 readData:
 
 
-  fileList[0] = "NO DATA";
+ // fileList[0] = "NO DATA";
 
   if (fehlercode == -1) {
     root = SD.open("/");        //root-Verzeichnis als Standard
@@ -67,7 +68,7 @@ readData:
     Serial.println(fileList[counter]);
 
     SDslot = mSDcard;
-
+    SPI.end();
 
     if (!SD.begin(SDslot)) {                    //MIcroSD nicht vorhanden -> Fehler 2
       fehlercode = 2;
@@ -101,9 +102,6 @@ readData:
   }
 
   resetPitchBend();
-  Serial.print(fehlercode);
-
-
   return fehlercode; //-1 bedeutet fehlerfrei initialisiert, alles andere ist ein Fehlercode
 
 }
@@ -277,11 +275,15 @@ void printFileList(void) {         // Druckt Songliste aus ;)
 
     Serial.end();
     Serial.begin(19200);
+    
+    Serial.write(lineFeed);
+    Serial.write(lineFeed);
+    
     for (int i = 0; i < 2; i++)
     {
       Serial.write(setPrintMode[i]);
     }
-    Serial.write(doubleHeight | doubleWidth);                   // Ungetestet
+    Serial.write(doubleHeight | doubleWidth); 
 
     Serial.write("Song List:");
     Serial.write(lineFeed);
@@ -315,6 +317,11 @@ bool isMidi(char* filename) {
         || strstr(strlwr(filename + (len - 4)), ".mid")
         || strstr(strlwr(filename + (len - 4)), ".tmf")
         || strstr(strlwr(filename + (len - 4)), ".TMF")
+        || strstr(strlwr(filename + (len - 4)), ".tf1")
+        || strstr(strlwr(filename + (len - 4)), ".tf2")
+        || strstr(strlwr(filename + (len - 4)), ".tf3")
+        || strstr(strlwr(filename + (len - 4)), ".tf4")
+        
         // and anything else you want
      ) {
     result = true;

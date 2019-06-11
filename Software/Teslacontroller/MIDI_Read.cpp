@@ -128,6 +128,23 @@ void readMidi(byte byte0, byte byte1, byte byte2) {
 }
 
 
+void setDSPInput(void) {     // Analoges routing ;) // ANI1 = 10; ANI2 = 11;
+  for (int i = 0; i < 4; i++) {
+    if (getSettings().source[i] == 10) {                             
+        
+    
+    }
+    else if(getSettings().source[i] == 11){
+
+      
+    }
+    else{
+
+      
+    }
+  }
+}
+
 void midiAutoDistribute(byte byte0, byte byte1, byte byte2) {
 
   //Note on
@@ -313,16 +330,19 @@ void noteOff(byte output) {
 
 }
 
-void initialiseDSP(void){
- //Zuerst ein NOTE OFF auf allen Kanälen senden
-for(byte i=0; i<3; i++){
-noteOff(i); 
+void initialiseDSP(void) {
+  //Zuerst ein NOTE OFF auf allen Kanälen senden
+  for (byte i = 0; i < 3; i++) {
+    noteOff(i);
+  }
+  setDSPInput();
+  //Danach den Outpue Enable Pin hoch ziehen
+  pinMode(44, OUTPUT);
+  digitalWrite(44, HIGH);
+
 }
-//Danach den Outpue Enable Pin hoch ziehen
-pinMode(44, OUTPUT);
-digitalWrite(44, HIGH);
-  
-}
+
+
 
 uint32_t getFrequency(byte midiValue) {
   return pgm_read_dword(&frequency[midiValue]);
