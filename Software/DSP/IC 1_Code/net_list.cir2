@@ -1,0 +1,34 @@
+0 PulseAlg1 O_C54_A0_P1_out Link2
+1 PulseAlg2 O_C64_A0_P1_out Link3
+2 PulseAlg3 O_C69_A0_P1_out Link28
+3 PulseAlg4 O_C73_A0_P1_out Link29
+4 ICSigma100In1 O_C42_A0_P1_out Link5 O_C42_A0_P2_out Link4
+5 EQ1940DualS1 I_C82_A0_P1_in Link5 I_C82_A0_P2_in Link4 O_C82_A0_P3_out Link6 O_C82_A0_P4_out Link7
+6 SingleCtrlSplitSlew1 I_C53_A0_P1_in Link6 O_C53_A0_P2_out Link15 O_C53_A0_P3_out Link16
+7 SingleCtrlSplitSlew2 I_C67_A0_P1_in Link7 O_C67_A0_P2_out Link18 O_C67_A0_P3_out Link17
+8 Gain1940AlgNS2 I_C13_A0_P1_in Link15 O_C13_A0_P2_out Link12
+9 Gain1940AlgNS1 I_C10_A0_P1_in Link16 O_C10_A0_P2_out Link13
+10 Gain1940AlgNS4 I_C91_A0_P1_in Link17 O_C91_A0_P2_out Link20
+11 Gain1940AlgNS3 I_C80_A0_P1_in Link18 O_C80_A0_P2_out Link19
+12 HardClipNewAlg1 I_C20_A0_P1_in Link12 O_C20_A0_P2_out Link14
+13 HardClipNewAlg2 I_C26_A0_P1_in Link13 O_C26_A0_P2_out Link9
+14 HardClipNewAlg3 I_C32_A0_P1_in Link19 O_C32_A0_P2_out Link21
+15 HardClipNewAlg4 I_C39_A0_P1_in Link20 O_C39_A0_P2_out Link8
+16 MultCtrlDelGrowAlg2 I_C106_A0_P1_in Link8 O_C106_A0_P2_out Link11
+17 MultCtrlDelGrowAlg1 I_C103_A0_P1_in Link9 O_C103_A0_P2_out Link10
+18 OneShotRiseResetFixedAlg1 I_C137_A0_P1_in Link14 I_C137_A0_P2_in Link10 O_C137_A0_P3_out Link27
+19 OneShotRiseResetFixedAlg2 I_C157_A0_P1_in Link21 I_C157_A0_P2_in Link11 O_C157_A0_P3_out Link24
+20 SingleCtrlSplit1 I_C111_A0_P1_in Link24 O_C111_A0_P2_out Link22 O_C111_A0_P3_out Link23
+21 SingleCtrlSplit4 I_C142_A0_P1_in Link27 O_C142_A0_P2_out Link26 O_C142_A0_P3_out Link25
+22 SingleCtrlSplit3 I_C120_A0_P1_in Link22 O_C120_A0_P2_out Link36 O_C120_A0_P3_out Link37
+23 SingleCtrlSplit2 I_C116_A0_P1_in Link23 O_C116_A0_P2_out Link38 O_C116_A0_P3_out Link39
+24 SingleCtrlSplit5 I_C147_A0_P1_in Link25 O_C147_A0_P2_out Link34 O_C147_A0_P3_out Link35
+25 SingleCtrlSplit6 I_C154_A0_P1_in Link26 O_C154_A0_P2_out Link32 O_C154_A0_P3_out Link33
+26 ThreeChanXMixer1940Alg1 I_C0_A0_P1_in Link2 I_C0_A0_P2_in Link32 I_C0_A0_P3_in Link36 O_C0_A0_P4_out Link1
+27 ThreeChanXMixer1940Alg2 I_C5_A0_P1_in Link3 I_C5_A0_P2_in Link33 I_C5_A0_P3_in Link37 O_C5_A0_P4_out Link0
+28 ThreeChanXMixer1940Alg3 I_C169_A0_P1_in Link28 I_C169_A0_P2_in Link34 I_C169_A0_P3_in Link38 O_C169_A0_P4_out Link30
+29 ThreeChanXMixer1940Alg4 I_C175_A0_P1_in Link29 I_C175_A0_P2_in Link35 I_C175_A0_P3_in Link39 O_C175_A0_P4_out Link31
+30 ICSigma100Out2 I_C58_A0_P1_in Link0
+31 ICSigma100Out1 I_C36_A0_P1_in Link1
+32 ICSigma100Out3 I_C60_A0_P1_in Link30
+33 ICSigma100Out4 I_C62_A0_P1_in Link31

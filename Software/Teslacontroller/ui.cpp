@@ -94,7 +94,7 @@ void onEncoderChange(bool dir) {
 
 
 
-      if (!dir) {
+      if (dir) {
         if (locSettings.source[((cursorPosition / 10) % 10) - 1] < 11) locSettings.source[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.source[((cursorPosition / 10) % 10) - 1] = 0;
       }
@@ -102,11 +102,14 @@ void onEncoderChange(bool dir) {
         if (locSettings.source[((cursorPosition / 10) % 10) - 1] > 0) locSettings.source[((cursorPosition / 10) % 10) - 1]--;
         else locSettings.source[((cursorPosition / 10) % 10) - 1] = 11;
       }
+      setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
       setDSPInput();    //Beim ändern des Eingangs des DSP Quelle anpassen
     }
+
+
     //Ist CoilType gewählt?
     if (cursorPosition % 10 == 2) {
-      if (!dir) {
+      if (dir) {
 
         if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] < 5) locSettings.coilType[((cursorPosition / 10) % 10) - 1]++;
         else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 0;
@@ -115,8 +118,9 @@ void onEncoderChange(bool dir) {
         if (locSettings.coilType[((cursorPosition / 10) % 10) - 1] > 0) locSettings.coilType[((cursorPosition / 10) % 10) - 1]--;
         else locSettings.coilType[((cursorPosition / 10) % 10) - 1] = 5;
       }
+      setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
     }
-    setSettings(locSettings); //Lokale Kopie wieder in den original Struct schreiben
+
   }
 
   //MENÜ
@@ -321,29 +325,29 @@ void onButtonClicked(uint8_t pin) {
         //Gerade "Player File" gewählt?
         if (encpos == 1) {
           //SD ohne Fehler gelesen
-          if(initializeSD()== -1){
+          if (initializeSD() == -1) {
             currentScreen = 2;
           }
-//          switch (initializeSD()) {
-//            case -1:
-//              currentScreen = 2;
-//              break;
-//
-//            //Keine Karte
-//            case 1:
-//              printNotificationScreen(2);
-//              Serial.print("Fehler 1");
-//              break;
-//            //Karte Leer
-//            case 2:
-//              printNotificationScreen(3);
-//              break;
-//            //Anderer Fehler
-//            default:
-//              printNotificationScreen(0);
-//              break;
-//          }
-          
+          //          switch (initializeSD()) {
+          //            case -1:
+          //              currentScreen = 2;
+          //              break;
+          //
+          //            //Keine Karte
+          //            case 1:
+          //              printNotificationScreen(2);
+          //              Serial.print("Fehler 1");
+          //              break;
+          //            //Karte Leer
+          //            case 2:
+          //              printNotificationScreen(3);
+          //              break;
+          //            //Anderer Fehler
+          //            default:
+          //              printNotificationScreen(0);
+          //              break;
+          //          }
+
         }
         //Gerade "Coil Setup" gewählt?
         if (encpos == 2) {

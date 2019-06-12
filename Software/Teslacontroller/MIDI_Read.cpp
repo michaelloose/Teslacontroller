@@ -17,11 +17,12 @@
 
 int bend[4] = {0x2000, 0x2000, 0x2000, 0x2000};
 
-byte freqAddress[] = {0x00, 0x04, 0x08, 0x0c};  //Registeradressen für die Frequenz des jeweiligen Outputs
+byte routingAddress[4] = {0x2D, 0x30, 0x33, 0x36}; //Registeradressen für die Mixer die das Routing der Quellen im DSP übernehmen
+byte freqAddress[4] = {0x00, 0x04, 0x08, 0x0c};  //Registeradressen für die Frequenz des jeweiligen Outputs
 
 //Duty Address wird nicht mehr benötigt, da der DSP im Batch Mode beschrieben wird
-//byte dutyAddress[] = {0x01, 0x05, 0x09, 0x0d};  //Registeradressen für das Tastverhältnis jeweiligen Outputs
-byte outAddress[] = {0x02, 0x06, 0x0a, 0x0e};   //Registeradressen füs Aktivieren/deaktivieren der jeweiligen Outputs
+//byte dutyAddress[4] = {0x01, 0x05, 0x09, 0x0d};  //Registeradressen für das Tastverhältnis jeweiligen Outputs
+byte outAddress[4] = {0x02, 0x06, 0x0a, 0x0e};   //Registeradressen füs Aktivieren/deaktivieren der jeweiligen Outputs
 
 // MIDI Wert zu Frequenz
 //Erstellt mit Matlab Skript: Einheit ist Frequenz/48kHz (DSP Samplingrate) Position ist auf das MIDI Frequenzbyte angepasst
@@ -130,17 +131,31 @@ void readMidi(byte byte0, byte byte1, byte byte2) {
 
 void setDSPInput(void) {     // Analoges routing ;) // ANI1 = 10; ANI2 = 11;
   for (int i = 0; i < 4; i++) {
-    if (getSettings().source[i] == 10) {                             
-        
-    
-    }
-    else if(getSettings().source[i] == 11){
+    byte transmitData[14] = {0x00, routingAddress[i], 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    //Analog1
+    if (getSettings().source[i] == 10) {
 
-      
+      transmitData[7] = 0x80;
+      Wire.beginTransmission(DSP_Address);
+      Wire.write(transmitData, 14);
+      Wire.endTransmission(DSP_Address);
     }
-    else{
+    //Analog2
+    else if (getSettings().source[i] == 11) {
+      transmitData[11] = 0x80;
+      Wire.beginTransmission(DSP_Address);
+      Wire.write(transmitData, 14);
+      Wire.endTransmission(DSP_Address);
 
-      
+    }
+    //Interner Generator
+    else {
+      transmitData[3] = 0x80;
+      Wire.beginTransmission(DSP_Address);
+      Wire.write(transmitData, 14);
+      Wire.endTransmission(DSP_Address);
+
+
     }
   }
 }

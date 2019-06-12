@@ -1,0 +1,14 @@
+EQ1940SingleS10B1_2 0
+EQ1940SingleS11B1_2 1
+EQ1940SingleS12B1_2 2
+EQ1940SingleS11A1_2 3
+EQ1940SingleS12A1_2 4
+SingleCtrlSplit1_3 5
+Gain1940AlgNS1_4 6
+Gain1940AlgNS2_5 7
+HardClipNewAlg1up_6 8
+HardClipNewAlg1_6 9
+HardClipNewAlg2up_7 10
+HardClipNewAlg2_7 11
+MultCtrlDelGrowAlg1_8 12
+OneShotRiseResetFixedAlg1output1 13

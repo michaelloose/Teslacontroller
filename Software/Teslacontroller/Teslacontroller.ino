@@ -26,15 +26,15 @@
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI3);
 
 void setup(void) {
+  
+  // Initialisierung der seriellen Schnittstellen
+  Serial.begin(BAUDRATE); //Debugging Schnittstelle
 
   //Display initialisieren und Startbild anzeigen
   initialiseDisplay();
   loadSettings();
   printStartScreen();
 
-  // Initialisierung der seriellen Schnittstellen
-  Serial.begin(BAUDRATE); //Debugging Schnittstelle
-  // Serial3.begin(31250); //MIDI Schnittstelle
 
 
 
